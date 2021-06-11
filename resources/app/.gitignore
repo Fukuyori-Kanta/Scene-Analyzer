@@ -1,8 +1,0 @@
-
-#管理外フォルダ
-result/
-node_modules/
-python/temp
-
-#管理外ファイル
-package.json
