@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <title>Scene Analyzer</title>
+        <meta name="description" content="カット分割・ラベル付けの結果を表示する">
+        
+        <!-- ファビコンの設定
+          <link rel="icon" type="image/png" href="images/favicon.png">
+        -->
+
+        <!-- CSSの読み込み -->
+        <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Philosopher">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.4/css/all.css">
+        <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="../css/style.css">
+
+        <!-- JSの読み込み -->
+        <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        <script type="text/javascript" src="../js/renderer.js"></script>
+    </head>
+
+    <body id="result-list">
+        <!-- ヘッダー -->
+        <h1 class="headline"><a href="index.html">Scene Analyzer</a></h1>
+
+        <div class="container">
+            <h2 class="heading">結果一覧<span id="scene-count"></span>件</h2>
+            <!-- 検索条件 -->
+            <form method="get" action="#" class="search_container grid">
+                <!-- 検索オプション -->
+                <div id="search-option">
+                    <input type="radio" name="search-option" value="video-name" id="video-name">
+                    <label for="video-name" class="radio-label">動画名</label>
+
+                    <input type="radio" name="search-option" value="label-name" id="label-name">
+                    <label for="label-name" class="radio-label">ラベル名</label>
+                </div>
+                <!-- 検索単語 -->
+                <div id="search-area">
+                    <input id="search-word" type="text" size="25" placeholder="動画名を検索">
+                    <input id="search-button" type="button" value="&#xf002">
+                </div>
+            </form>      
+        </div>
+        
+        <!-- 動画一覧 -->
+        <div id="video-list"></div>
+
+        <!-- ページトップボタン -->
+        <div id="page_top"><a href="#"></a></div>
+
+        <!-- 前のページに戻る -->
+        <div class="back-page .sub-container">
+            <INPUT class="back-button" type="button" Value="← 前のページに戻る" onClick="history.go(-1);">
+        </div>
+    </body>
+
+</html>

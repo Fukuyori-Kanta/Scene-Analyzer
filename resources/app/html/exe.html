@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <title>Scene Analyzer</title>
+        <meta name="description" content="カット分割・ラベル付けの結果を表示する">
+        
+        <!-- ファビコンの設定
+          <link rel="icon" type="image/png" href="images/favicon.png">
+        -->
+
+        <!-- CSSの読み込み -->
+        <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Philosopher">
+        <link rel="stylesheet" href="../css/style.css">
+
+        <!-- JSの読み込み -->
+        <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        <script type="text/javascript" src="../js/renderer.js"></script>
+    </head>
+
+    <body id="exe">
+        <!-- ヘッダー -->
+        <h1 class="headline"><a href="index.html">Scene Analyzer</a></h1>
+    
+        <!-- メインコンテンツ -->
+        <div class="container">
+            <div id="grid-A" class="border-line">
+                <h2 class="heading margin-left">動画データの分析</h2>
+            </div>
+
+            <!-- ドロップエリア -->
+            <div id="grid-B" class="border-line">
+                <div id="drop-area">
+                    ここにファイルをドラッグ＆ドロップして下さい。
+                    <br/>
+                    複数のファイルを選択すれば一度に分析できます。
+                </div>
+            </div>
+
+            <!-- 説明文 -->
+            <div id="grid-C" class="border-line">
+                <div id="description">
+                    <h3 class="heading">説明文</h3>
+                    <p class="padding">動画を場面ごとに分割し、「何が映っているか」、「何をしているか」のラベルを付与します。</p>
+                    
+                    <h3 class="heading">工程</h3>
+                    <ol class="process">
+                        <li>カット分割</li>
+                        <li>ラベル付け</li>
+                        <li>シーンの統合</li>
+                        <li>ＣＭ好感度の付与</li>
+                    </ol>
+            
+                    <p class="padding text-red">※ラベル付けには、GPUを搭載している必要があります。</p>
+                </div>
+            </div>
+            
+            <!-- 分析ファイル一覧 -->
+            <div id="grid-D" class="border-line">
+                <h3 class="heading margin-left">分析するファイル一覧<span id="file-num"></span>件</h3>
+                <!--<h3 class="heading margin-right">※.mp4のみ</h3>-->
+            </div>
+            <div id="grid-E" class="border-line">
+                <div id="file-list"><ul></ul></div>
+            </div>
+            
+            <!-- [分析開始]ボタン -->
+            <div id="grid-F" class="border-line">
+                <div class="btn-wrapper">
+                    <button id="start-btn" class="button" type="button"><p>分析開始</p></button>    
+                </div>
+            </div>
+        </div>
+
+        <!-- モーダルウィンドウ -->
+        <div id="modal-main">
+            <!-- 動画情報 -->
+            <div class="video-info">
+                <div id="file-name"></div>
+                <div id="cut-no"></div>
+            </div>
+    
+            <!-- 結果表示画面（左右分割） -->
+            <div id="result-screen">
+    
+                <!-- 動画表示画面 -->
+                <div id="movie-screen" class="border-line"></div>
+                
+                <!-- ラベル一覧表示画面 -->
+                <div id="label-screen" class="border-line">
+    
+                    <h2 class="heading tag">このシーンのラベル一覧</h2>
+                    <h3 id="labels"></h3>
+                    <br>
+                    <h2 class="heading tag">このシーンの好感度</h2>
+                    <h3 id="favo"></h3>
+                </div>
+            </div>
+    
+            <!-- 動画一覧画面 -->
+            <div class="scene-list-screen" class="border-line">
+                <h4 class="heading margin-left">シーン分割結果（計 : <span id="cut-cnt"></span>シーン）</h4>
+                <div id="scene-list" class="horizontal-scroll"></div>         
+            </div>
+
+            <!-- 結果を切り替えボタン -->
+            <div class="switch-btn">
+                <INPUT class="prev-button" type="button" Value="前の動画へ">
+                    
+                <INPUT class="next-button" type="button" Value="次の動画へ">
+            </div>
+
+        </div>
+
+        <!-- 処理中のアニメーション -->
+        <div id="my-spinner" class="box not-exe">
+            <div class="spinner type1">
+              <span>分析中...</span>
+            </div>
+        </div>
+
+        <!-- 前のページに戻る -->
+        <div class="back-page border-line">
+            <input class="back-button" type="button" Value="← 前のページに戻る" onClick="history.go(-1);">
+        </div>
+    </body>
+</html>
