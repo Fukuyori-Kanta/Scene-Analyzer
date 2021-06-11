@@ -29,7 +29,13 @@ a {
 
 /* ヘッダー
 ------------------------------- */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    background-color: #000000;
+  }
 .headline {
+    width: 300px;
     font-family: 'Philosopher', serif;
     text-transform: none;
     font-weight: normal;
@@ -41,6 +47,31 @@ a {
 .headline a {
     color: #fff;
 }
+.main-nav {
+    width: 400px;
+    display: flex;
+    font-size: 1.25rem;
+    text-transform: uppercase;
+    list-style: none;
+    padding: 15px 10px 0;
+}
+.main-nav li { 
+    margin-left: 36px;
+}
+.main-nav a {
+    color: #ffffff ; 
+}
+.main-nav a:hover {
+    color: #4699ca;
+}
+.hamburger-menu {
+    width: 100px;
+
+}
+.hamburger-menu button {
+    width: 100px;
+}
+
 
 /* ページバックボタン
 ------------------------------- */
