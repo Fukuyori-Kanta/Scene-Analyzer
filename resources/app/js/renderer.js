@@ -337,7 +337,7 @@ function exeFunc() {
     const runAnalysis = function(targetPathList) {
         return new Promise(function(resolve, reject) {
             let options = {
-                pythonPath: 'C:\\Users\\hukuyori\\Anaconda3\\python',
+                pythonPath: 'C:\\Users\\fukuyori\\anaconda3\\envs\\scene_ana\\python',
                 scriptPath : path.join(__dirname, '/../python/'),
                 args : [targetPathList]
             };
@@ -654,6 +654,49 @@ function resultShowFunc() {
             $('#result-show img[data-cut-no=' + cutNo + ']').css('border-color', '#e00');
         }
     });  
+
+    // --------------------------------------------------
+    // マウスホイールで横スクロール処理
+    // --------------------------------------------------
+    // イージング（easing）処理
+    jQuery.easing['jswing'] = jQuery.easing['swing'];
+    jQuery.extend( jQuery.easing,
+    {
+        def: 'easeOutQuad',
+        easeOutCirc: function (x, t, b, c, d) {
+            return c * Math.sqrt(1 - (t=t/d-1)*t) + b;
+        }
+    });
+
+    let moving;         // スクロール後の位置
+    let aftermov;       // スクロール後の位置+余韻の距離
+    const after =100;   // 余韻の距離
+    const speed = 1;    // 1スクロールの移動距離
+    const animation = 'easeOutCirc';    // アニメーション
+    const anm_speed = 700;    // アニメーションスピード
+    $('.horizontal-scroll').on('mousewheel', function(e) {
+        let mov = e.originalEvent.wheelDelta   // 移動量
+
+        // スクロール後の位置の算出
+        var moving = $(this).scrollLeft() - mov * speed;
+
+        // スクロールする
+        $(this).scrollLeft(moving);
+        
+        // 余韻の計算
+        if (mov < 0) {
+            // 下にスクロールしたとき
+            aftermov =  moving + after;
+        } else {
+            // 上にスクロールしたとき
+            aftermov =  moving - after;
+        }
+        // 余韻アニメーション
+        $(this).stop().animate({scrollLeft: aftermov}, anm_speed, animation);
+        
+        // 縦スクロールさせない
+        return false;
+    });
 }
     
 function statisticsFunc() {
