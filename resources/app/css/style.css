@@ -253,6 +253,10 @@ a {
 .text-red {
     color: #DD0000;
 }
+.clear_bt {
+    float: right;
+    color: gray;
+  }
 /* 結果一覧ページ [result_list.html]
 ------------------------------- */
 #scene-count {
@@ -939,7 +943,7 @@ video {
     width: 18px;
     height: 18px;
     margin: -3px 5px 0 0;
-    background: url("../images/leftArrow.png") no-repeat;
+    /*background: url("../images/leftArrow.png") no-repeat;*/
     background-size: contain;
     vertical-align: middle;
 }
@@ -962,7 +966,7 @@ video {
     width: 18px;
     height: 18px;
     margin: -3px 0 0 5px;
-    background: url("../images/rightArrow.png") no-repeat;
+    /*background: url("../images/rightArrow.png") no-repeat;*/
     background-size: contain;
     vertical-align: middle;
 }
