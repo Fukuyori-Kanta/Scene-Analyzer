@@ -1,10 +1,5 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import cv2
 import os
-import shutil
-from logging import getLogger, StreamHandler, DEBUG
-import csv
 
 from file_io import dest_folder_create
 

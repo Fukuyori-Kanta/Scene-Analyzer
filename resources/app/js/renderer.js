@@ -878,7 +878,8 @@ function search_sql(searchWord, searchOption) {
     // "動画名"の場合
     if(searchOption=='video-name') {
         query = "SELECT video_id, scene_no, labels_id FROM scene_data " +
-                "WHERE video_id like '" + words[0] + "%' " + 
+                "WHERE video_id like '%" + words[0] + "%' " + 
+                "AND labels_id like '2%' " + 
                 "GROUP BY video_id;";
     }
     // "ラベル名"の場合 
@@ -890,6 +891,7 @@ function search_sql(searchWord, searchOption) {
                         "WHERE labels_id in ( " +
                             "SELECT DISTINCT(labels_id) FROM labels_data " +
                             "WHERE label = '" + words[0] + "')) " +
+                            "AND labels_id like '2%' " + 
                     "GROUP BY video_id; ";
         
         let qry2 =  "SELECT video_id, scene_no, labels_id FROM scene_data " +
@@ -903,6 +905,7 @@ function search_sql(searchWord, searchOption) {
                                 "(SELECT DISTINCT(labels_id) FROM labels_data " +
                                 "WHERE label = '" + words[1] + "') As t2 " +
                             "WHERE t1.labels_id = t2.labels_id )) " +
+                            "AND labels_id like '2%' " + 
                     "GROUP BY video_id; ";
         
         let qry3 =  "SELECT video_id, scene_no, labels_id FROM scene_data " +
@@ -918,6 +921,7 @@ function search_sql(searchWord, searchOption) {
                                 "(SELECT DISTINCT(labels_id) FROM labels_data " +
                                 "WHERE label = '" + words[2] + "') As t3 " +
                             "WHERE t1.labels_id = t2.labels_id AND t2.labels_id = t3.labels_id)) " +
+                            "AND labels_id like '2%' " + 
                     "GROUP BY video_id; ";
         
         // 単語数による判定
@@ -972,7 +976,8 @@ function updateAccessHistory(fileName) {
     connection.connect();
 
     let query = "UPDATE access_history set last_access_time = NOW() " +
-                "WHERE video_id='" + fileName + "';";
+                "WHERE video_id='" + fileName + "' " + 
+                "AND labels_id like '2%'";
 
     // --------------------------------------------------
     // SQL文の実行
