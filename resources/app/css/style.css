@@ -31,7 +31,7 @@ a {
 ------------------------------- */
 .page-header {
     display: flex;
-    justify-content: space-between;
+    /*justify-content: space-between;*/
     background-color: #000000;
   }
 .headline {
@@ -742,6 +742,9 @@ video {
     font-weight: bold;
     text-align: right;
     z-index: 10;
+}
+.red-color {
+    color: #F00
 }
 @media screen and (min-width: 800px) {
 	.chart-wrap .row {

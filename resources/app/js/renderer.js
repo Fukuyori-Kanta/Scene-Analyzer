@@ -1027,7 +1027,8 @@ function showGragh() {
                 kubun : data.kubun,
                 ranking : data.ranking,
                 label : data.label,
-                count : data.count
+                count : data.count, 
+                norm : data.norm
             });
         }
         const entries = it.entries();
@@ -1072,7 +1073,7 @@ function showGragh() {
                         $bar.attr('data-class', 'top');
                     } else if(j == 1) {
                         $bar.attr('data-class', 'mid');
-                    } else if(j ==2 ){
+                    } else if(j == 2){
                         $bar.attr('data-class', 'btm');
                     }
                     
@@ -1081,6 +1082,11 @@ function showGragh() {
                     // 数値
                     let $number =  $('<span class="number">' + data.count + '</span>');
                     
+                    // 正規化した値が0.2以上の場合（その区分特有のラベル）、赤字にする
+                    if(data.norm >= 0.2) {
+                        $label.addClass("red-color");
+                    }
+
                     $row.append($label);
                     $row.append($barWrap);
                     $row.append($number);
@@ -1098,7 +1104,6 @@ function showGragh() {
             generateBarGraph('#dashboard-stats');   
         }
     });    
-
 }
 
 function generateBarGraph(wrapper) {
