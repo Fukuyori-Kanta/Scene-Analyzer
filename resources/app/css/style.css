@@ -395,8 +395,8 @@ input[type="radio"]:checked + .radio-label {
     position: fixed;
     right: 15px;
     bottom: 15px;
-    background: #ef3f98;
-    opacity: 0.6;
+    background: #3355ff;
+    opacity: 0.9;
     border-radius: 50%;
 }
 #page_top a{
@@ -422,7 +422,9 @@ input[type="radio"]:checked + .radio-label {
     margin: auto;
     text-align: center;
 }
-
+#page_top:hover {
+    opacity: 0.8;
+}
 /* 結果表示ページ [result_show.html]
 ------------------------------- */
 /* 動画情報 */

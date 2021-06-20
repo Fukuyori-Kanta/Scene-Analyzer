@@ -1136,22 +1136,3 @@ function generateBarGraph(wrapper) {
         bar.addClass('in');
     });
 }
-
-    /*
-    //--------------------------------------------------------------------------------
-    // マウスホイールで横スクロール処理 TODO
-    //--------------------------------------------------------------------------------
-    // スクロール後の位置
-    var moving;
-    // 1スクロールの移動距離
-    var speed = 30;
-    $('.horizontal-scroll').on('mousewheel', function(e, mov) {
-        console.log('scroll')
-        //  スクロール後の位置の算出
-        var moving = $(this).scrollLeft() - mov * speed;
-        // スクロールする
-        $(this).scrollLeft(moving);
-        // 縦スクロールさせない
-        return false;
-    });
-    */
