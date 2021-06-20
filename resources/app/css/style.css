@@ -320,7 +320,7 @@ input[type=radio] {
     display: none; /* ラジオボタンを非表示にする */
 }
 input[type="radio"]:checked + .radio-label {
-    background: #606060;
+    background: #202020;
     color: #ffffff; 
 }
 .radio-label {
@@ -336,7 +336,8 @@ input[type="radio"]:checked + .radio-label {
     text-align: center; 
     line-height: 35px; 
     cursor: pointer; 
-    border: thin solid #b0b0b0;
+    border: solid #707070;
+    border-width: 1px 1px 0px 1px;
     border-radius: 5px 5px 0 0; 
 }
 /* 動画一覧 */
