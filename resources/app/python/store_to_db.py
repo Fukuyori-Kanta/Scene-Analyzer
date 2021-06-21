@@ -114,8 +114,9 @@ if __name__ == "__main__":
     base = os.path.dirname(os.path.abspath(__file__))   # スクリプト実行ディレクトリ
     scene_path = os.path.normpath(os.path.join(base, r'..\..\..\..\CM_Analysis\Result\Favo\result_data_ALL.csv'))   # シーン動画の保存先
     ranking_path = os.path.normpath(os.path.join(base, r'..\..\..\..\CM_Analysis\Result\Favo\result_data_ALL.csv'))   # ランキングデータの保存先
+    works_info_path = os.path.normpath(os.path.join(base, r'..\..\..\..\CM_Analysis\Data\作品情報\MovieList_210428.csv'))   # 作品情報の保存先
     video_path = os.path.normpath(os.path.join(base, r'..\..\..\..\CM_Analysis\Data\Movie'))   # 動画データの保存先
-    
+
     # 好感要因
     score_category = [['F', '好感度'], ['A', '試用意向'], ['R1', '出演者'], ['R2', 'ユーモラス'], ['R3', 'セクシー'], ['R4', '宣伝文句'], 
                       ['R5', '音楽・サウンド'], ['R6', '商品にひかれた'], ['R7', '説得力に共感'], ['R8', 'ダサいけど憎めない'], ['R9', '時代の先端'], ['R10', '心がなごむ'], 
@@ -130,6 +131,9 @@ if __name__ == "__main__":
     # ランキングデータの読み込み
     ranking_data = read_csv(ranking_path)
     
+    # 作品情報の読み込み
+    works_info = read_csv(works_info_path)
+
     # 動画IDリストの作成
     files = os.listdir(video_path)  # 動画ファイル名（動画ID）一覧を取得
     video_id_list = [f.replace('.mp4', '') for f in files]  # 一覧から拡張子を削除
@@ -151,6 +155,7 @@ if __name__ == "__main__":
     labels_data = []    # ラベルデータ      [video_id, labels_id, no, label, count]
     access_history = [] # アクセスデータ    [video_id, last_access_time]
     rank_data = []      # ランキングデータ  [category, kubun, ranking, label, count, norm]
+    works_data = []     # 作品データ        [video_id, company_name, brand_name, product_name]
 
     for result_data in result_data_ALL:
         video_id = result_data[0]   # 動画ID
@@ -172,7 +177,7 @@ if __name__ == "__main__":
         time = random.randrange(60)
         access_history.append([video_id, '2020-1-1 00:00:' + str(time)])
 
-    # ランキングデータに格納
+    # ランキングデータに格納　TODO : 列名を削除して CM_analysisのanalysis_mod.pyの修正
     for i in range(17):
         category = score_category[i][0] # カテゴリー（好感要因）
         label_col = ranking_data[i*3]   # ラベル列
@@ -189,6 +194,14 @@ if __name__ == "__main__":
                 norm = norm_col[start_row+k]
                 rank_data.append([category, kubun, ranking, label, count, norm])
 
+    # 作品データに格納
+    for info in works_info:
+        video_id = info[1]
+        meta_data = info[2].split('／')
+        company_name = meta_data[0]
+        brand_name = meta_data[1]
+        product_name = meta_data[2]
+        works_data.append([video_id, company_name, brand_name, product_name])
 
     # --------------------------------------------------
     # DBに格納
@@ -245,16 +258,34 @@ if __name__ == "__main__":
     
     db.commit()
 
+    # 作品情報
+    # テーブルの作成
+    cursor.execute("""CREATE TABLE IF NOT EXISTS works_data(
+                    video_id VARCHAR(30),
+                    company_name VARCHAR(50),
+                    brand_name VARCHAR(50),
+                    product_name VARCHAR(50));""")
+    db.commit()
+
+    insert_data = "INSERT INTO works_data (video_id, company_name, brand_name, product_name) VALUES (%s, %s, %s, %s);"
+    
+    for wd in works_data:
+        cursor.execute(insert_data, wd)
+    
+    db.commit()
+
+
     # テスト
     file_name = 'A211079487'
     scene_no = 1
     # データを取得
     #cursor.execute("SELECT * FROM scene_data LEFT JOIN labels_data WHERE video_id='" + file_name + "'")
-    cursor.execute("SELECT * FROM scene_data LEFT JOIN access_history ON scene_data.video_id=access_history.video_id WHERE scene_data.video_id='" + file_name + "'")
-    rows = cursor.fetchall()
-
+    #cursor.execute("SELECT * FROM scene_data LEFT JOIN access_history ON scene_data.video_id=access_history.video_id WHERE scene_data.video_id='" + file_name + "'")
+    #rows = cursor.fetchall()
+    """
     # 出力
     for i in rows:
         print(i)
     
     print(len(rows))
+    """
