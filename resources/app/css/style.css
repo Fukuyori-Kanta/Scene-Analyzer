@@ -113,10 +113,10 @@ a {
 }
 .button {
     font-size: 1.375rem;
-    background: #7f97ff;
+    background: #202020;
     color: #fff;
     border-radius: 5px;
-    border:2px solid #8080f0;
+    border:2px solid #606060;
 }
 .button:hover {
     opacity: 0.7;
