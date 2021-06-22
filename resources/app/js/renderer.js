@@ -129,13 +129,15 @@ function exeFunc() {
     $('#start-btn').on('click', function() {
         // 動画が1つ以上セットされている時
         if(isVideoSet){
-            
+            alert('現在、新規分析の機能は利用できません。');
+            /*
             // 処理中のアニメーションを開始
             $('#my-spinner').removeClass('not-exe');
 
             // 実行            
             runAnalysis(targetPathList)
-                .then(confirmCompleted);            
+                .then(confirmCompleted);
+            */            
         }
         else{
             alert('動画ファイルを右上領域にドラッグ&ドロップしてから押して下さい。');
@@ -471,7 +473,8 @@ function resultListFunc() {
     if(searchWord !== 'undefined') {
         // プレスホルダーに検索単語を表示
         $('#search-word').val(searchWord);
-
+        
+        // SQLに一覧データを問い合わせて表示
         search_sql(searchWord, searchOption);
     }
     // --------------------------------------------------
