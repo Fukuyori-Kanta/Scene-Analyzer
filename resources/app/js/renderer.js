@@ -230,11 +230,6 @@ function exeFunc() {
         // --------------------------------------------------
         // 動画情報を[result_list.html]から取得、表示
         // --------------------------------------------------
-        //const query = location.search;
-        //const value = query.split('=');
-        //const fileName = decodeURIComponent(value[1]);  // ファイル名
-        //const fileName = 'F201065409';  // ファイル名
-        //const cutPath = './python/temp/cut';  // カット保存パス
         const fileNames = fs.readdirSync(cutPath);  // カット保存フォルダのファイル名の配列
         const fileName = fileNames[index];
         // --------------------------------------------------
@@ -524,27 +519,25 @@ function resultListFunc() {
     // --------------------------------------------------
     // 検索ボタンが押された時の処理
     // --------------------------------------------------
-    $('#search-button').on('click', function(e) {
+    $('#search-button').click(function(e) {
         let $searchWord = $('#search-word').val();
         let $searchOption = $('input[name="search-option"]:radio').val();
-        
-        console.log($searchWord);
-        console.log($searchOption);
-        
+       
         // 検索単語が入力されている時のみ、
         // 同ページ([result_list.html])に検索単語を送信
         if($searchWord) {
             location.href = 'result_list.html?search=' + encodeURIComponent($searchWord);
         }
-        //location.href = 'result_list.html?search=' + encodeURIComponent($searchWord) + 
-        //'&option=' + encodeURIComponent($searchOption);
-
     });
     // --------------------------------------------------
     // テキストボックスでEnterが押された時の処理（Enter無効化）
     // --------------------------------------------------  
-    $('#search-word').on('keydown', function(e) {
-        if(e.key == 'Enter') {
+    $('#search-word').keypress(function(e) {
+        let key = e.which;
+        if(key == 13) {
+            // 検索ボタンが押された時の処理
+            $('#search-button').click();
+
             return false;
         }
     });
