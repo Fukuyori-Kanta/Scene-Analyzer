@@ -26,79 +26,9 @@ def connection_to_db(target_db):
 
     return db, cursor
 
-def delete_table(target_db):
-    # データベースに接続
-    db, cursor = connection_to_db(target_db)
-
-    db_name = "fruits_table"
-    cursor.execute("""DROP TABLE %s""" % db_name)
-
+def delete_table(db, cursor, table_name):
+    cursor.execute("""DROP TABLE IF EXISTS %s""" % table_name)
     db.commit()
-
-def create_table(target_db):
-    # データベースに接続
-    db, cursor = connection_to_db(target_db)
-
-    # テーブルの削除
-    delete_table(target_db)
-
-    cursor.execute("""CREATE TABLE CM_data_table(
-                    video_id VARCHAR(20),
-                    scene_no VARCHAR(20),
-                    favo_value FLOAT);""")
-
-    db.commit()
-
-def insert_data(target_db):
-    # データベースに接続
-    db, cursor = connection_to_db(target_db)
-    
-    # データを挿入
-    insert_fruit = "INSERT INTO fruits_table (fruits, value) VALUES (%s, %s);"
-    
-
-    fruit_list = [
-        ("apple", 100),
-        ("orange", 80),
-        ("melon", 500),
-        ("pineapple", 700)
-    ]
-    
-    for fruit in fruit_list:
-        cursor.execute(insert_fruit, fruit)
-    
-    db.commit()
-
-def select_data(target_db):
-    # データベースに接続
-    db, cursor = connection_to_db(target_db)
-    
-    # データを取得 TODO
-    cursor.execute('SELECT * FROM %s')
-    rows = cursor.fetchall()
-    """
-    # 出力
-    for i in rows:
-        print(i)
-    """
-
-def update_data(target_db):
-    # データベースに接続
-    db, cursor = connection_to_db(target_db)
-    
-    # データを更新
-    cursor.execute('UPDATE fruits_table SET value=1000 WHERE fruits="apple"')
-    db.commit()
-    
-    # データを取得
-    cursor.execute('SELECT * FROM fruits_table')
-    rows = cursor.fetchall()
-    """
-    # 出力
-    for i in rows:
-        print(i)
-    """
-    return rows
 
 def get_within_parenthesis(s):
     return int(re.findall("(?<=\().+?(?=\))", s)[0])
@@ -113,7 +43,7 @@ if __name__ == "__main__":
     # パス設定
     base = os.path.dirname(os.path.abspath(__file__))   # スクリプト実行ディレクトリ
     scene_path = os.path.normpath(os.path.join(base, r'..\..\..\..\CM_Analysis\Result\Favo\result_data_ALL.csv'))   # シーン動画の保存先
-    ranking_path = os.path.normpath(os.path.join(base, r'..\..\..\..\CM_Analysis\Result\Favo\result_data_ALL.csv'))   # ランキングデータの保存先
+    ranking_path = os.path.normpath(os.path.join(base, r'..\..\..\..\CM_Analysis\Result\Favo\rank_data_ALL.csv'))   # ランキングデータの保存先
     works_info_path = os.path.normpath(os.path.join(base, r'..\..\..\..\CM_Analysis\Data\作品情報\MovieList_210428.csv'))   # 作品情報の保存先
     video_path = os.path.normpath(os.path.join(base, r'..\..\..\..\CM_Analysis\Data\Movie'))   # 動画データの保存先
 
@@ -211,20 +141,66 @@ if __name__ == "__main__":
     # データベースに接続
     db, cursor = connection_to_db(target_db)
     
+    # データ格納前の初期化
+    delete_table(db, cursor, "scene_data")
+    delete_table(db, cursor, "labels_data")
+    delete_table(db, cursor, "access_history")
+    delete_table(db, cursor, "ranking")
+    delete_table(db, cursor, "works_data")
+    
+    # シーンデータテーブル[scene_data]の作成
+    cursor.execute("""CREATE TABLE IF NOT EXISTS scene_data(
+                    video_id VARCHAR(30),
+                    scene_no VARCHAR(30),
+                    favo_value FLOAT,
+                    labels_id VARCHAR(30),
+                    labels_count INT);""")
+    db.commit()
+
+    # ラベルデータテーブル[labels_data]の作成
+    cursor.execute("""CREATE TABLE IF NOT EXISTS labels_data(
+                    labels_id INT,
+                    no INT,
+                    label VARCHAR(30),
+                    count INT);""")
+    db.commit()
+
+    # アクセスデータテーブル[access_history]の作成    
+    cursor.execute("""CREATE TABLE IF NOT EXISTS access_history(
+                    video_id VARCHAR(30),
+                    last_access_time TIMESTAMP);""")
+    db.commit()
+
+    # ランキングテーブル[ranking]の作成
+    cursor.execute("""CREATE TABLE IF NOT EXISTS ranking(
+                    category VARCHAR(10),
+                    kubun VARCHAR(30),
+                    ranking INT,
+                    label VARCHAR(30),
+                    count INT,
+                    norm FLOAT);""")
+    db.commit()
+
+    # 作品データテーブル[works_data]の作成
+    cursor.execute("""CREATE TABLE IF NOT EXISTS works_data(
+                    video_id VARCHAR(30),
+                    company_name VARCHAR(50),
+                    brand_name VARCHAR(50),
+                    product_name VARCHAR(50));""")
+    db.commit()
+ 
     # シーンデータを挿入
     insert_data = "INSERT INTO scene_data (video_id, scene_no, favo_value, labels_id, labels_count) VALUES (%s, %s, %s, %s, %s);"
     
     for sd in scene_data:
         cursor.execute(insert_data, sd)
-    
     db.commit()
 
     # ラベルデータを挿入
     insert_data = "INSERT INTO labels_data (labels_id, no, label, count) VALUES (%s, %s, %s, %s);"
-    
+
     for ld in labels_data:
         cursor.execute(insert_data, ld)
-    
     db.commit()
     
     # アクセスデータを挿入
@@ -232,60 +208,18 @@ if __name__ == "__main__":
     
     for ah in access_history:
         cursor.execute(insert_data, ah)
-    
     db.commit()
-    
 
-    # ランキングデータの削除
-    #db_name = "ranking"
-    #cursor.execute("""DROP TABLE %s""" % db_name)
-    #db.commit()
-
-    #cursor.execute("""CREATE TABLE IF NOT EXISTS ranking(
-    #                category VARCHAR(10),
-    #                kubun VARCHAR(30),
-    #                ranking INT,
-    #                label VARCHAR(30),
-    #                count INT,
-    #                norm FLOAT);""")
-    #db.commit()
-    
     # ランキングデータを挿入
     insert_data = "INSERT INTO ranking (category, kubun, ranking, label, count, norm) VALUES (%s, %s, %s, %s, %s, %s);"
     
     for rd in rank_data:
         cursor.execute(insert_data, rd)
-    
     db.commit()
 
-    # 作品情報
-    # テーブルの作成
-    cursor.execute("""CREATE TABLE IF NOT EXISTS works_data(
-                    video_id VARCHAR(30),
-                    company_name VARCHAR(50),
-                    brand_name VARCHAR(50),
-                    product_name VARCHAR(50));""")
-    db.commit()
-
+    # 作品データを挿入
     insert_data = "INSERT INTO works_data (video_id, company_name, brand_name, product_name) VALUES (%s, %s, %s, %s);"
     
     for wd in works_data:
         cursor.execute(insert_data, wd)
-    
     db.commit()
-
-
-    # テスト
-    file_name = 'A211079487'
-    scene_no = 1
-    # データを取得
-    #cursor.execute("SELECT * FROM scene_data LEFT JOIN labels_data WHERE video_id='" + file_name + "'")
-    #cursor.execute("SELECT * FROM scene_data LEFT JOIN access_history ON scene_data.video_id=access_history.video_id WHERE scene_data.video_id='" + file_name + "'")
-    #rows = cursor.fetchall()
-    """
-    # 出力
-    for i in rows:
-        print(i)
-    
-    print(len(rows))
-    """
