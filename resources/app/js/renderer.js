@@ -41,6 +41,11 @@ $(function() {
     if($('#statistics').length) {
         statisticsFunc();
     }
+    
+    // ヘッダー右上のハンバーガーメニューの動作
+    $('.menu-btn').on('click', function(){
+        $('.menu').toggleClass('is-active');
+    });
 });
 
 /**
