@@ -31,11 +31,11 @@ a {
 ------------------------------- */
 .page-header {
     display: flex;
-    /*justify-content: space-between;*/
+    justify-content: space-between;
     background-color: #000000;
   }
 .headline {
-    width: 300px;
+    width: 250px;
     font-family: 'Philosopher', serif;
     text-transform: none;
     font-weight: normal;
@@ -48,7 +48,6 @@ a {
     color: #fff;
 }
 .main-nav {
-    width: 400px;
     display: flex;
     font-size: 1.25rem;
     text-transform: uppercase;
@@ -71,7 +70,9 @@ a {
 .hamburger-menu button {
     width: 100px;
 }
-
+.left-side {
+    display: flex;
+}
 
 /* ページバックボタン
 ------------------------------- */
