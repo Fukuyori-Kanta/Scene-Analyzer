@@ -63,19 +63,55 @@ a {
 .main-nav a:hover {
     color: #4699ca;
 }
-/*
-.hamburger-menu {
-    width: 100px;
-
-}
-.hamburger-menu button {
-    width: 100px;
-}
-*/
 .left-side {
     display: flex;
 }
-
+/* メニュー開閉ボタン */
+.menu-btn {
+    position: fixed;
+    top: 10px;
+    right: 20px;
+    z-index: 2;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #888;
+    color: #fff;
+}
+/* メニュー本体 */
+.menu {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 1;
+    width: 30vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #555;
+}
+.menu__item {
+    width: 100%;
+    height: auto;
+    padding: .5em 1em;
+    text-align: center;
+    color: #fff;
+    box-sizing: border-box;
+}
+/* アニメーション部分 */ 
+/* アニメーション前のメニューの状態 */
+.menu {
+    transform: translateX(100vw);
+    transition: all .3s linear;
+}
+/* アニメーション後のメニューの状態 */
+.menu.is-active {
+    transform: translateX(0);
+}
 
 /* ページバックボタン
 ------------------------------- */
@@ -277,6 +313,7 @@ a {
 .search_container {
     box-sizing: border-box;
     margin: 0 0 0 auto;
+    margin-right: 20px;
 }
 .search_container input[type="text"] {
     border: 1px solid #999;
@@ -474,6 +511,26 @@ video {
     border-style: solid;
     */
     overflow: auto;
+}
+.label-area {
+    display: flex;
+}
+.edit-btn {
+    margin-top: 12px;
+    margin-right: 20px;
+    width: 70px;
+    height: 35px;
+    font-size: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #238636;
+    color: #fff;
+    border-radius: 6px;
+    letter-spacing: 1px;
+}
+.edit-btn:hover {
+    opacity: 0.7;
 }
 #labels {
     display: flex;
@@ -983,59 +1040,3 @@ video {
     background-size: contain;
     vertical-align: middle;
 }
-
-/*----------------------------
-* メニュー開閉ボタン
-*----------------------------*/
-.menu-btn{
-    position: fixed;
-    top: 10px;
-    right: 20px;
-    z-index: 2;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #888;
-    color: #fff;
-  }
-  
-  /*----------------------------
-  * メニュー本体
-  *----------------------------*/
-  .menu{
-    position: fixed;
-    top: 0;
-    right: 0;
-    z-index: 1;
-    width: 30vw;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: #555;
-  }
-  .menu__item{
-    width: 100%;
-    height: auto;
-    padding: .5em 1em;
-    text-align: center;
-    color: #fff;
-    box-sizing: border-box;
-  }
-  
-  /*----------------------------
-  * アニメーション部分
-  *----------------------------*/
-  
-  /* アニメーション前のメニューの状態 */
-  .menu{
-    transform: translateX(100vw);
-    transition: all .3s linear;
-  }
-  /* アニメーション後のメニューの状態 */
-  .menu.is-active{
-    transform: translateX(0);
-  }
