@@ -679,7 +679,7 @@ function resultShowFunc() {
         let mov = e.originalEvent.wheelDelta   // 移動量
 
         // スクロール後の位置の算出
-        var moving = $(this).scrollLeft() - mov * speed;
+        moving = $(this).scrollLeft() - mov * speed;
 
         // スクロールする
         $(this).scrollLeft(moving);
@@ -698,6 +698,12 @@ function resultShowFunc() {
         // 縦スクロールさせない
         return false;
     });
+
+    // --------------------------------------------------
+    // 編集ボタン押された時の処理
+    // --------------------------------------------------
+    
+
 }
     
 function statisticsFunc() {
@@ -843,9 +849,10 @@ function showLabelData(fileName, sceneNo) {
             $labels.append('このシーンにはラベルは付与されていません。');
         } 
         else {
-            for(let data of rows) {
-                let $label = $('<p class="label">' + data.label + '</p>');
-                $labels.append($label);
+            for(let i = 0; i < rows.length; i++) {       
+                let $labelItem = $('<div data-label-id="' + Number(i+1) + '" class="label-item"></div>');
+                $labelItem.append('<h3 class="label">' + rows[i].label + '</h3>');
+                $labels.append($labelItem);
             }
         }
 
