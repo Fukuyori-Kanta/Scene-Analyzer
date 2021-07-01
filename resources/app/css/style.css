@@ -470,6 +470,7 @@ input[type="radio"]:checked + .radio-label {
 #page_top:hover {
     opacity: 0.8;
 }
+
 /* 結果表示ページ [result_show.html]
 ------------------------------- */
 /* 動画情報 */
@@ -512,7 +513,7 @@ video {
     */
     overflow: auto;
 }
-.label-area {
+.annotation-area {
     display: flex;
 }
 .edit-btn {
@@ -521,13 +522,19 @@ video {
     width: 70px;
     height: 35px;
     font-size: 18px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     background: #238636;
     color: #fff;
     border-radius: 6px;
     letter-spacing: 1px;
+    cursor : pointer;
+    position: relative;
+}
+.edit-btn p{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateY(-50%) translateX(-50%);
+    font-size: 16px;
 }
 .edit-btn:hover {
     opacity: 0.7;
@@ -598,6 +605,128 @@ video {
     padding: 0.5em;
     list-style-type: none!important;/*ポチ消す*/
 }
+.button-area {
+    display: flex;
+}
+.save-btn {
+    margin-top: 12px;
+    margin-right: 20px;
+    width: 70px;
+    height: 35px;
+    background: #687dd1;
+    color: #fff;
+    border-radius: 6px;
+    letter-spacing: 1px;
+    cursor : pointer;
+    position: relative;
+    display: none;
+}
+.save-btn p{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateY(-50%) translateX(-50%);
+    font-size: 16px;
+}
+.save-btn:hover {
+    opacity: 0.7;
+}
+.cancel-btn {
+    margin-top: 12px;
+    margin-right: 20px;
+    width: 80px;
+    height: 35px;
+    background: #ddd;
+    border-radius: 6px;
+    border: 3px solid #687dd1;
+    letter-spacing: 1px;
+    cursor : pointer;
+    position: relative;
+    display: none;
+}
+.cancel-btn p{
+    position: absolute;
+    top: 50%;
+    left: 57%;
+    transform: translateY(-50%) translateX(-50%);
+    width:100%;
+    font-size: 12px;
+}
+.cancel-btn:hover {
+    opacity: 0.7;
+}
+.label-item {
+    display: flex;
+}
+#input-area {
+    margin: 10px;
+    display: flex;
+}
+#input-area input[type="text"] {
+    border: 1px solid #999;
+    padding: 3px 20px;
+    border-radius: 5px;
+    height: 2.0em;
+    width: 300px;
+    overflow: hidden;
+}
+#input-area input[type="text"]:focus {
+    outline: 0;
+}
+#input-area input[type="button"] {
+    cursor: pointer;
+    font-family: FontAwesome;
+    font-size: 1.3em;
+    border: none;
+    background: none;
+    color: #3879D9;
+    outline : none;
+    display: inline-block;
+    vertical-align: middle;
+}
+.delete-btn {
+    width: 20px;
+    height: 20px;
+    background: #d35454;
+    border-radius: 50%;
+    margin-top: -4px;
+    margin-left: -10px;
+    overflow: hidden;
+    transition: 0.5s;
+    opacity: 0;
+    cursor : pointer;
+}
+.delete-btn span {
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+}
+.delete-btn:hover {
+    transform:scale(1.2, 1.2);
+}
+.add-btn {
+    margin-left: 5px;
+    width: 60px;
+    height: 32px;
+    font-size: 13px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #ddd;
+    color: #333;
+    border-radius: 6px;
+    border: 1px solid #333;
+    letter-spacing: 1px;
+    cursor : pointer;
+}
+.add-btn:hover {
+    opacity: 0.7;
+}
+.add-label {
+    color: #4699ca;
+}
 /* 結果表示画面
 ------------------------------- */
 @media (min-width: 800px) {
@@ -627,6 +756,7 @@ video {
         word-break: break-all;
     }
 }
+
 
 /* 統計ページ [statistics.html]
 ------------------------------- */

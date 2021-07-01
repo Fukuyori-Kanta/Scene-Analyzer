@@ -41,7 +41,7 @@ $(function() {
     if($('#statistics').length) {
         statisticsFunc();
     }
-    
+
     // ヘッダー右上のハンバーガーメニューの動作
     $('.menu-btn').on('click', function(){
         $('.menu').toggleClass('is-active');
@@ -699,11 +699,134 @@ function resultShowFunc() {
         return false;
     });
 
-    // --------------------------------------------------
-    // 編集ボタン押された時の処理
-    // --------------------------------------------------
-    
+    // アノテーション機能
+    let isfirstClick = true;   // [結果を表示]ボタンを初回クリック時だけtrue
+    let temp = [];  // 削除するラベル群
 
+    // 各ボタンを非表示
+    $('.save-btn').hide();
+    $('.cancel-btn').hide();
+    // --------------------------------------------------
+    // [編集]ボタンが押された時の処理
+    // --------------------------------------------------
+    $('.edit-btn').on('click', function(e) {
+        // 初回時のみ
+        if(isfirstClick) {
+            // [削除]ボタンを追加
+            $('#labels .label-item').append('<div class="delete-btn"><span>×</span></div>');
+            
+            // [削除]ボタンにIDを付与
+            $('.delete-btn').attr('data-id', function(i){
+                i++;//初期値0を1に
+                return i;//要素の数だけ1から連番で idを追加
+            });
+
+            // ラベル入力欄を追加
+            $('#input-area').append('<input id="input-word" type="text" size="25" placeholder="ラベル名を入力して下さい">');
+            $('#input-area').append('<div class="add-btn"><p>追加</p></div>');
+
+            isfirstClick = false;
+        }        
+        // [編集]ボタンを非表示
+        $('.edit-btn').hide();
+
+        // [保存]ボタンを表示
+        $('.save-btn').show();  
+        
+        // [削除]ボタンを表示
+        $('.delete-btn').css('opacity', '1');
+        
+        // ラベル入力欄を表示
+        $('#input-area').show();
+    });
+
+    // --------------------------------------------------
+    // [保存]ボタンが押された時の処理
+    // --------------------------------------------------
+    $(document).on('click', '.save-btn', function(e) {
+        // [編集]ボタンを表示
+        $('.edit-btn').show();
+
+        // [保存]ボタンを非表示
+        $('.save-btn').hide();
+
+        // [キャンセル]ボタンを非表示
+        $('.cancel-btn').hide();
+
+        // [削除]ボタンを非表示
+        $('.delete-btn').css('opacity', '0');
+
+        // ラベル入力欄を非表示
+        $('#input-area').hide();
+
+        // 編集後のラベルデータの送信
+        
+    });
+
+    // --------------------------------------------------
+    // [削除]ボタンが押された時の処理
+    // --------------------------------------------------
+    $(document).on('click', '.delete-btn', function(e) {
+        // 該当のラベルを削除
+        let labelId = $(e.currentTarget).data("id");
+        temp.push($('[data-label-id=' + labelId + ']').remove());
+
+        // [キャンセル]ボタンを表示
+        $('.cancel-btn').show();
+    });
+
+    // --------------------------------------------------
+    // [キャンセル]ボタンが押された時の処理
+    // --------------------------------------------------
+    $(document).on('click', '.cancel-btn', function(e) {
+        // 削除したラベルを復活させる
+        for(let i = 0; i < temp.length; i++) {  
+            $('#labels').append(temp[i]);
+        }
+            
+        // [キャンセル]ボタンを非表示
+        $('.cancel-btn').hide();
+    });
+
+    // --------------------------------------------------
+    // [追加]ボタンが押された時の処理
+    // --------------------------------------------------
+    $(document).on('click', '.add-btn', function(e) {
+        let $inputWord = $('#input-word').val();
+        // 検索単語が入力されている時にラベルを追加
+        if($inputWord) {
+            // ラベルを追加
+            let $labels = $('#labels');
+            let labelId = 3; /////////
+            let $labelItem = $('<div data-label-id="' + labelId + '" class="label-item"></div>');
+            $labelItem.append('<h3 class="label add-label">' + $inputWord + '</h3>');
+
+            // [削除]ボタンを追加
+            $labelItem.append('<div class="delete-btn" data-id="' + labelId +'"><span>×</span></div>');
+
+            // 追加要素を反映
+            $labels.append($labelItem);
+            
+            // ラベル入力欄のテキストを削除
+            $('#input-word').val("");
+
+            // 追加した[削除]ボタンを表示
+            $('.delete-btn').css('opacity', '1');
+        }
+    });
+
+    // --------------------------------------------------
+    // ラベル入力欄でEnterキーが押された時の処理
+    // --------------------------------------------------
+    $(document).on('keypress', '#input-word', function(e) {
+        let key = e.which;
+        if(key == 13) {
+            // 検索ボタンが押された時の処理
+            $('.add-btn').trigger('click');
+
+            return false;
+        }
+    });
 }
     
 function statisticsFunc() {
