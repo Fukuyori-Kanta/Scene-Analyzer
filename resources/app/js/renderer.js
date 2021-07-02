@@ -712,7 +712,17 @@ function resultShowFunc() {
     $('.edit-btn').on('click', function(e) {
         // 初回時のみ
         if(isfirstClick) {
-            // [削除]ボタンを追加
+            // ラベル入力欄を追加
+            $('#input-area').append('<input id="input-word" type="text" size="25" placeholder="ラベル名を入力して下さい">');
+            $('#input-area').append('<div class="add-btn"><p>追加</p></div>');
+
+            isfirstClick = false;
+        }        
+
+        // [削除]ボタンを追加
+        // 既に追加されている場合は、追加しない
+        if(shouldAddDeleteBtn()) {
+            // 各ラベル要素の下に追加
             $('#labels .label-item').append('<div class="delete-btn"><span>×</span></div>');
             
             // [削除]ボタンにIDを付与
@@ -720,13 +730,8 @@ function resultShowFunc() {
                 i++;//初期値0を1に
                 return i;//要素の数だけ1から連番で idを追加
             });
-
-            // ラベル入力欄を追加
-            $('#input-area').append('<input id="input-word" type="text" size="25" placeholder="ラベル名を入力して下さい">');
-            $('#input-area').append('<div class="add-btn"><p>追加</p></div>');
-
-            isfirstClick = false;
-        }        
+        }
+        
         // [編集]ボタンを非表示
         $('.edit-btn').hide();
 
@@ -738,6 +743,12 @@ function resultShowFunc() {
         
         // ラベル入力欄を表示
         $('#input-area').show();
+
+        // [削除]ボタンを追加するか真偽値を返す関数
+        function shouldAddDeleteBtn() {
+            // IDが割り振られていれば、既に追加されているためFalseを返す
+            return $('.label-item .delete-btn').data('id') != 1;
+        }
     });
 
     // --------------------------------------------------
