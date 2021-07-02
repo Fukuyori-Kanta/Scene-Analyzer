@@ -628,77 +628,6 @@ function resultShowFunc() {
     // --------------------------------------------------
     showLabelData(fileName, cutNo);
 
-    // --------------------------------------------------
-    // 別のカットをクリックした時、データを切り替える
-    // --------------------------------------------------
-    $('#scene-list').on("click", function(e) {
-        cutNo = e.target.getAttribute('data-cut-No');   // カット番号(シーン番号)
-
-        // シーンの表示領域クリック時のみ切り替え
-        if(cutNo) {
-            // カット番号を表示
-            $('#cut-no').text(cutNo + 'シーン目');
-            
-            // 動画を置換
-            currentVideo = document.getElementById('movie-screen');
-            video = document.createElement('video');
-            video.src = '../result/scene/' + fileName + '/' + 'scene' + cutNo + '.mp4';
-            video.controls = true;
-            video.autoplay = true;
-            currentVideo.replaceChild(video, currentVideo.lastChild);
-
-            // ラベルデータ、好感度データを置換
-            showLabelData(fileName, cutNo);
-
-            // 現在のシーンの枠に色付け
-            $('#result-show img').css('border-color', '#000');  // 全ての枠を黒色に戻してから
-            $('#result-show img[data-cut-no=' + cutNo + ']').css('border-color', '#e00');
-        }
-    });  
-
-    // --------------------------------------------------
-    // マウスホイールで横スクロール処理
-    // --------------------------------------------------
-    // イージング（easing）処理
-    jQuery.easing['jswing'] = jQuery.easing['swing'];
-    jQuery.extend( jQuery.easing,
-    {
-        def: 'easeOutQuad',
-        easeOutCirc: function (x, t, b, c, d) {
-            return c * Math.sqrt(1 - (t=t/d-1)*t) + b;
-        }
-    });
-
-    let moving;         // スクロール後の位置
-    let aftermov;       // スクロール後の位置+余韻の距離
-    const after =100;   // 余韻の距離
-    const speed = 1;    // 1スクロールの移動距離
-    const animation = 'easeOutCirc';    // アニメーション
-    const anm_speed = 700;    // アニメーションスピード
-    $('.horizontal-scroll').on('mousewheel', function(e) {
-        let mov = e.originalEvent.wheelDelta   // 移動量
-
-        // スクロール後の位置の算出
-        moving = $(this).scrollLeft() - mov * speed;
-
-        // スクロールする
-        $(this).scrollLeft(moving);
-        
-        // 余韻の計算
-        if (mov < 0) {
-            // 下にスクロールしたとき
-            aftermov =  moving + after;
-        } else {
-            // 上にスクロールしたとき
-            aftermov =  moving - after;
-        }
-        // 余韻アニメーション
-        $(this).stop().animate({scrollLeft: aftermov}, anm_speed, animation);
-        
-        // 縦スクロールさせない
-        return false;
-    });
-
     // アノテーション機能
     let isfirstClick = true;   // [結果を表示]ボタンを初回クリック時だけtrue
     let temp = [];  // 削除するラベル群
@@ -731,7 +660,7 @@ function resultShowFunc() {
                 return i;//要素の数だけ1から連番で idを追加
             });
         }
-        
+
         // [編集]ボタンを非表示
         $('.edit-btn').hide();
 
@@ -837,6 +766,91 @@ function resultShowFunc() {
 
             return false;
         }
+    });
+
+    // --------------------------------------------------
+    // [保存]ボタンを押さずに、別のカットをクリックした時 
+    // --------------------------------------------------
+    $('#scene-list').on("click", function(e) {
+        // [保存]ボタンを押していない場合、メッセージを表示して遷移させない
+        if ($('.save-btn').css('display') == 'block') {
+            // 保存できていない旨のメッセージを表示
+            swal("変更内容を保存して下さい", "[保存]ボタンを押してからシーンを切り替えて下さい", "error");
+
+            // データを切り替えずにそのシーンに留まる
+            e.stopImmediatePropagation();
+        }
+    });  
+
+    // --------------------------------------------------
+    // 別のカットをクリックした時、データを切り替える
+    // --------------------------------------------------
+    $('#scene-list').on("click", function(e) {
+        cutNo = e.target.getAttribute('data-cut-No');   // カット番号(シーン番号)
+
+        // シーンの表示領域クリック時のみ切り替え
+        if(cutNo) {
+            // カット番号を表示
+            $('#cut-no').text(cutNo + 'シーン目');
+            
+            // 動画を置換
+            currentVideo = document.getElementById('movie-screen');
+            video = document.createElement('video');
+            video.src = '../result/scene/' + fileName + '/' + 'scene' + cutNo + '.mp4';
+            video.controls = true;
+            video.autoplay = true;
+            currentVideo.replaceChild(video, currentVideo.lastChild);
+
+            // ラベルデータ、好感度データを置換
+            showLabelData(fileName, cutNo);
+
+            // 現在のシーンの枠に色付け
+            $('#result-show img').css('border-color', '#000');  // 全ての枠を黒色に戻してから
+            $('#result-show img[data-cut-no=' + cutNo + ']').css('border-color', '#e00');
+        }
+    });  
+
+    // --------------------------------------------------
+    // マウスホイールで横スクロール処理
+    // --------------------------------------------------
+    // イージング（easing）処理
+    jQuery.easing['jswing'] = jQuery.easing['swing'];
+    jQuery.extend( jQuery.easing,
+    {
+        def: 'easeOutQuad',
+        easeOutCirc: function (x, t, b, c, d) {
+            return c * Math.sqrt(1 - (t=t/d-1)*t) + b;
+        }
+    });
+
+    let moving;         // スクロール後の位置
+    let aftermov;       // スクロール後の位置+余韻の距離
+    const after = 100;   // 余韻の距離
+    const speed = 1;    // 1スクロールの移動距離
+    const animation = 'easeOutCirc';    // アニメーション
+    const anm_speed = 700;    // アニメーションスピード
+    $('.horizontal-scroll').on('mousewheel', function(e) {
+        let mov = e.originalEvent.wheelDelta   // 移動量
+
+        // スクロール後の位置の算出
+        moving = $(this).scrollLeft() - mov * speed;
+
+        // スクロールする
+        $(this).scrollLeft(moving);
+        
+        // 余韻の計算
+        if (mov < 0) {
+            // 下にスクロールしたとき
+            aftermov =  moving + after;
+        } else {
+            // 上にスクロールしたとき
+            aftermov =  moving - after;
+        }
+        // 余韻アニメーション
+        $(this).stop().animate({scrollLeft: aftermov}, anm_speed, animation);
+        
+        // 縦スクロールさせない
+        return false;
     });
 }
     
