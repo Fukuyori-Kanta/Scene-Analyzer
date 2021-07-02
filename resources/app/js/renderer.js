@@ -46,6 +46,19 @@ $(function() {
     $('.menu-btn').on('click', function(){
         $('.menu').toggleClass('is-active');
     });
+    
+    // [戻る]ボタンを押したときの処理
+    $('.go-back').on('click', function(e) {
+        history.back();
+    });
+    // [進む]ボタンを押したときの処理
+    $('.go-forward').on('click', function(e) {
+        history.forward();
+    });
+    // [Reload]ボタンを押したときの処理
+    $('.reload').on('click', function(e) {
+        window.location.reload(true);
+    });
 });
 
 /**

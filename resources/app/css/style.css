@@ -27,12 +27,54 @@ a {
     margin-right: 10px;
 }
 
+/* メニューバー
+------------------------------- */
+#menu-bar-container {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 100vw;
+    height: 40px;
+    background-color: #EFF0EE;
+}
+#menu-bar {
+    position: fixed;
+    padding: 5px;
+    margin-top: -1px;
+    width: 100%;
+    max-height: 40px;
+    background-color: #EFF0EE;
+    color: #000000;
+    display: block;
+    white-space: nowrap;
+    border-bottom: 1px solid #888;
+    z-index: 2;
+}
+#menu-bar input {
+    width: -webkit-fill-available;
+    min-height: 20px;
+    font-size: 14px;
+    border: 1px solid #000;
+    border-radius: 3px;
+}
+#menu-bar button {
+    padding: 3px 5px;
+    min-height: 20px;
+    font-size: 14px;
+    border: 1px solid #000;
+    background: #DEE0EE;
+}
+#menu-bar button:hover {
+    background: #C0C0C0;
+}
+
 /* ヘッダー
 ------------------------------- */
 .page-header {
     display: flex;
     justify-content: space-between;
     background-color: #000000;
+    margin-top: 40px;
   }
 .headline {
     width: 250px;
@@ -68,10 +110,10 @@ a {
 }
 /* メニュー開閉ボタン */
 .menu-btn {
-    position: fixed;
-    top: 10px;
+    position: absolute;
+    top: 50px;
     right: 20px;
-    z-index: 2;
+    z-index: 1;
     width: 40px;
     height: 40px;
     display: flex;
