@@ -950,6 +950,7 @@ function getFolderList(targetFolderPath) {
  * @param  {Array} videos 表示する動画名の配列
  */
 function showVideos(videos) {
+    /*
     videos.forEach(videoName => {
         // カット数を取得
         let cutNum = getFolderList(path.join(__dirname, '../result/thumbnail/', videoName)).length;
@@ -971,6 +972,55 @@ function showVideos(videos) {
         // let $div = $('<div class="item"><img class="thumbnail" src=' + thumbnail + ' alt=""><p>' + videoName + '(' + cutNum + ')</p></div>');
 
         $('#video-list').append($div);
+    });
+    */
+
+    // MySQLとのコネクションの作成
+    const connection = mysql.createConnection(mysql_setting);
+    
+    // DB接続
+    connection.connect();
+
+    let query = "SELECT video_id, product_name " +
+                "FROM works_data;"
+                
+    // --------------------------------------------------
+    // SQL文の実行
+    // --------------------------------------------------
+    connection.query(query, function (err, rows) {
+        // エラー処理
+        if (err) { 
+            console.log('err: ' + err); 
+        }        
+        // --------------------------------------------------
+        // サムネイルと作品名の表示
+        // --------------------------------------------------
+        for(let data of rows) {
+            let videoName = data.video_id;  // 動画ID
+
+            // シーン数を取得
+            let sceneNum = getFolderList(path.join(__dirname, '../result/thumbnail/', videoName)).length;
+
+            // サムネ画像のパスを取得
+            let thumbnail = '../result/thumbnail/' + videoName + '/thumbnail1.jpg'
+                
+            // 各要素の作成・追加
+            // <div>要素を作成
+            let $div = $('<div class="item"></div>');
+
+            // <img>要素を追加
+            let $img = $('<img data-video-name=' + videoName + ' class="thumbnail" src=' + thumbnail + ' alt="">');
+            $($div).append($img);
+
+            // <p>要素を追加
+            let $p = $('<p class="video-name" data-video-name=' + videoName + '>' + data.product_name + '</p>');
+            $($div).append($p);
+            // シーン数を追加
+            //let $p1 = $('<p class="scene-num" data-video-name=' + videoName + '>' + sceneNum + ' シーン</p>');
+            //$($div).append($p1);
+
+            $('#video-list').append($div);
+        }
     });
 }
 
