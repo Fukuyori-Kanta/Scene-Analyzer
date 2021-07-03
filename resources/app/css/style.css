@@ -450,7 +450,7 @@ input[type="radio"]:checked + .radio-label {
 #video-list .item {
 	width: 90%;
 	height: 85%;
-	padding-bottom: 35px;
+	padding-bottom: 45px;
 }
 #video-list .thumbnail {
     /*border: 1px solid #000000;*/
@@ -465,7 +465,7 @@ input[type="radio"]:checked + .radio-label {
     opacity: 0.7;
 }
 .video-name {
-    font-size: 1.25rem;
+    font-size: 18px;
     display: table;
     margin-left: 5px;
 }
@@ -474,7 +474,8 @@ input[type="radio"]:checked + .radio-label {
     cursor: pointer;
 }
 .scene-num {
-    font-size: small;
+    text-align: right;
+    font-size: 16px;
 }
 #page_top {
     width: 50px;
