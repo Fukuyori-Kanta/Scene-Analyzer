@@ -484,6 +484,9 @@ function resultListFunc() {
     }
     
     if(searchWord !== 'undefined') {
+        // パンくずリストに検索条件を表示
+        $('.bread ul').append('<li>' + searchWord + "</li>").trigger('create');
+
         // プレスホルダーに検索単語を表示
         $('#search-word').val(searchWord);
         
@@ -583,9 +586,12 @@ function resultShowFunc() {
     // --------------------------------------------------
     updateAccessHistory(fileName);
 
+    // パンくずリストにファイル名を表示
+    $('.bread ul').append('<li>' + fileName + "</li>").trigger('create');
+    
+    // ファイル名とカット番号を表示
     let cutNo = 1;  // カット番号（初期値は１を設定）
 
-    // ファイル名とカット番号を表示
     $('#file-name').text(fileName);
     $('#cut-no').text(cutNo + 'シーン目');
     
