@@ -127,7 +127,7 @@ a {
     position: fixed;
     top: 0;
     right: 0;
-    z-index: 1;
+    z-index: 0;
     width: 30vw;
     height: 100vh;
     display: flex;
@@ -163,6 +163,30 @@ a {
     background: #fff;
     border:2px solid #808080;
     border-radius:5px; 
+}
+.bread ul {
+    display: flex;
+    list-style-type: none;
+    margin: 10px 10px 10px;
+}
+.bread li a {
+    padding: 5px;
+    color: #000000;
+    font-size: 16px;
+    text-decoration: none;
+}
+.bread li a:hover {
+    background-color: #EEEEEE;
+}
+
+.bread li::before {
+    content: '\003e'; /* 「>」を要素間の区切り文字として表示 */
+    margin-left: 10px; /* 区切り文字と要素の間隔を調整 */
+    margin-right: 10px; /* 区切り文字と要素の間隔を調整 */
+    color: #888888; /* 区切り文字の文字色 */
+}
+.bread li:first-child::before {
+	content: normal;
 }
 
 /* 初期ページ [index.html]
