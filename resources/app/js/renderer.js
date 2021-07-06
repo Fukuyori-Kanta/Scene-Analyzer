@@ -988,7 +988,8 @@ function showVideos(videos) {
     connection.connect();
 
     let query = "SELECT video_id, product_name " +
-                "FROM works_data;"
+                "FROM works_data " +
+                "ORDER BY video_id";
                 
     // --------------------------------------------------
     // SQL文の実行
@@ -1102,22 +1103,25 @@ function search_sql(searchWord, searchOption) {
     // 検索オプションの判定
     // "動画名"の場合
     if(searchOption=='video-name') {
-        query = "SELECT video_id, scene_no, labels_id FROM scene_data " +
-                "WHERE video_id like '%" + words[0] + "%' " + 
-                "GROUP BY video_id;";
+        query = "SELECT works_data.video_id, works_data.product_name " +
+                "FROM scene_data INNER JOIN works_data ON scene_data.video_id = works_data.video_id " + 
+                "WHERE product_name like '%" + words[0] + "%' " + 
+                "GROUP BY works_data.video_id; ";
     }
     // "ラベル名"の場合 
     else {
-        let qry1 =  "SELECT video_id, scene_no, labels_id FROM scene_data " +
+        let qry1 =  "SELECT works_data.video_id, works_data.product_name " +
+                    "FROM scene_data INNER JOIN works_data ON scene_data.video_id = works_data.video_id " + 
                     "WHERE labels_id IN ( " +
                         "SELECT labels_id " +
                         "FROM labels_data " +
                         "WHERE labels_id in ( " +
                             "SELECT DISTINCT(labels_id) FROM labels_data " +
                             "WHERE label = '" + words[0] + "')) " +
-                    "GROUP BY video_id; ";
+                    "GROUP BY works_data.video_id; ";
         
-        let qry2 =  "SELECT video_id, scene_no, labels_id FROM scene_data " +
+        let qry2 =  "SELECT works_data.video_id, works_data.product_name " + 
+                    "FROM scene_data INNER JOIN works_data ON scene_data.video_id = works_data.video_id " + 
                     "WHERE labels_id IN ( " +
                         "SELECT labels_id " +
                         "FROM labels_data " +
@@ -1128,9 +1132,10 @@ function search_sql(searchWord, searchOption) {
                                 "(SELECT DISTINCT(labels_id) FROM labels_data " +
                                 "WHERE label = '" + words[1] + "') As t2 " +
                             "WHERE t1.labels_id = t2.labels_id )) " +
-                    "GROUP BY video_id; ";
+                    "GROUP BY works_data.video_id; ";
         
-        let qry3 =  "SELECT video_id, scene_no, labels_id FROM scene_data " +
+        let qry3 =  "SELECT works_data.video_id, works_data.product_name " + 
+                    "FROM scene_data INNER JOIN works_data ON scene_data.video_id = works_data.video_id " + 
                     "WHERE labels_id IN ( " +
                         "SELECT labels_id " +
                         "FROM labels_data " +
@@ -1143,7 +1148,7 @@ function search_sql(searchWord, searchOption) {
                                 "(SELECT DISTINCT(labels_id) FROM labels_data " +
                                 "WHERE label = '" + words[2] + "') As t3 " +
                             "WHERE t1.labels_id = t2.labels_id AND t2.labels_id = t3.labels_id)) " +
-                    "GROUP BY video_id; ";
+                    "GROUP BY works_data.video_id; ";
         
         // 単語数による判定
         switch(words.length) {
@@ -1178,7 +1183,37 @@ function search_sql(searchWord, searchOption) {
         // --------------------------------------------------
         // SQLの結果の動画一覧を表示
         // --------------------------------------------------
-        showVideos(videos);
+        //showVideos(videos);
+
+        // --------------------------------------------------
+        // サムネイルと作品名の表示
+        // --------------------------------------------------
+        for(let data of rows) {
+            let videoName = data.video_id;  // 動画ID
+
+            // シーン数を取得
+            let sceneNum = getFolderList(path.join(__dirname, '../result/thumbnail/', videoName)).length;
+
+            // サムネ画像のパスを取得
+            let thumbnail = '../result/thumbnail/' + videoName + '/thumbnail1.jpg'
+                
+            // 各要素の作成・追加
+            // <div>要素を作成
+            let $div = $('<div class="item"></div>');
+
+            // <img>要素を追加
+            let $img = $('<img data-video-name=' + videoName + ' class="thumbnail" src=' + thumbnail + ' alt="">');
+            $($div).append($img);
+
+            // <p>要素を追加
+            let $p = $('<p class="video-name" data-video-name=' + videoName + '>' + data.product_name + '</p>');
+            $($div).append($p);
+            // シーン数を追加
+            //let $p1 = $('<p class="scene-num" data-video-name=' + videoName + '>' + sceneNum + ' シーン</p>');
+            //$($div).append($p1);
+
+            $('#video-list').append($div);
+        }
     });
         
     // 接続終了

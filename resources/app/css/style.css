@@ -167,7 +167,7 @@ a {
 .bread ul {
     display: flex;
     list-style-type: none;
-    margin: 10px 10px 10px;
+    margin: 10px;
 }
 .bread li a {
     padding: 5px;
@@ -380,12 +380,13 @@ a {
     box-sizing: border-box;
     margin: 0 0 0 auto;
     margin-right: 20px;
+    margin-top: -30px;
 }
 .search_container input[type="text"] {
     border: 1px solid #999;
     padding: 3px 20px;
     border-radius: 5px;
-    height: 2.0em;
+    height: 2.5em;
     width: 300px;
     overflow: hidden;
 }
