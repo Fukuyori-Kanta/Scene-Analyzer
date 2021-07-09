@@ -732,6 +732,11 @@ function resultShowFunc() {
 
         // [キャンセル]ボタンを表示
         $('.cancel-btn').show();
+
+        // 1つもラベルがない時、「このシーンにはラベルは付与されていません。」を追加
+        if($('.label-item').length == 0) {
+            $('#labels').append('<div class="no-label">このシーンにはラベルは付与されていません。</div>');
+        }
     });
 
     // --------------------------------------------------
@@ -754,6 +759,10 @@ function resultShowFunc() {
         let $inputWord = $('#input-word').val();
         // 検索単語が入力されている時にラベルを追加
         if($inputWord) {
+            // １つもラベルがない時、「このシーンにはラベルは付与されていません。」を削除
+            if($('#labels').children().attr("class") == 'no-label') {
+                $('.no-label').remove();
+            }
             // ラベルを追加
             let $labels = $('#labels');
             let labelId = 3; /////////
@@ -1064,7 +1073,7 @@ function showLabelData(fileName, sceneNo) {
 
         // ラベルが1個もない時
         if(rows[0].labels_id == null) {
-            $labels.append('このシーンにはラベルは付与されていません。');
+            $labels.append('<div class="no-label">このシーンにはラベルは付与されていません。</div>');
         } 
         else {
             for(let i = 0; i < rows.length; i++) {       
