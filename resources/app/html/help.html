@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="ja">
+
     <head>
         <meta charset="UTF-8">
         <title>Scene Analyzer</title>
@@ -20,7 +21,7 @@
         <script type="text/javascript" src="../js/renderer.js"></script>
     </head>
 
-    <body id="index">
+    <body id="statistics">
         <!-- メニューバー -->
         <div id="#menu-bar-container">
             <div id="menu-bar">
@@ -62,35 +63,19 @@
             </div>
         </header>
 
-        <div class="container">
-            <!-- ページ遷移ボタン群 -->
-            <section id="page-transition" class="border-line">
-                <div class="btn-wrapper">
-                    <!-- 結果閲覧ボタン -->
-                    <a class="button" href="result_list.html">結果一覧</a>
-
-                    <!-- 実行ボタン -->
-                    <a class="button" href="exe.html">新たに分析</a>
-
-                    <!-- 統計ボタン -->
-                    <a class="button" href="statistics.html">統 計</a>
-                </div>
-            </section>
-
-            <!-- 動画の閲覧履歴 -->
-            <section id="recent-videos" class="border-line">
-                <div id="history-heading">
-                    <h3 class="bgc-gray text-center">閲 覧 履 歴</h3>
-                </div>
-
-                <!-- 閲覧履歴直近5件を表示 -->
-                <div id="access-history"></div>
-
-                <!-- [さらに見る]ボタン -->
-                <div id="add">
-                    <a href="result_list.html"><h3 class="bgc-gray text-center border-gray">さらに見る</h3></a>
-                </div>
-            </section>
+        <!-- パンくずリスト -->
+        <div class="bread">
+            <ul>
+                <li><a href="index.html">トップページ</a></li>
+                <li><a href="help.html">ヘルプ</a></li>
+            </ul>
         </div>
-    </body>
+
+        <h1>現在準備中です</h1>
+
+        <!-- 前のページに戻る -->
+        <div class="back-page .sub-container">
+            <INPUT class="back-button" type="button" Value="← 前のページに戻る" onClick="history.go(-1);">
+        </div>
+    </body>  
 </html>
