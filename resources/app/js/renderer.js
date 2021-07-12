@@ -8,6 +8,7 @@ window.jQuery = window.$ = require('jquery');   // electron上でjquery使う場
 let { PythonShell } = require('python-shell');
 //const { getHeapCodeStatistics } = require('v8');
 const mysql = require('mysql');
+const { type } = require('os');
 
 // MySQLとのコネクションの作成
 const mysql_setting = {
@@ -42,9 +43,20 @@ $(function() {
         statisticsFunc();
     }
 
+    // スクロールを禁止する関数
+    function noScroll(event) {
+        event.preventDefault();
+    }
     // ヘッダー右上のハンバーガーメニューの動作
     $('.menu-btn').on('click', function(){
         $('.menu').toggleClass('is-active');
+        // メニューがアクティブの時、スクロールを禁止にする
+        if($('.menu').attr('class') == 'menu is-active') {
+            document.addEventListener('mousewheel', noScroll, { passive: false });
+        }
+        else {
+            document.removeEventListener('mousewheel', noScroll, { passive: false });
+        }
     });
     
     // [戻る]ボタンを押したときの処理
