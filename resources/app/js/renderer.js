@@ -574,6 +574,22 @@ function resultListFunc() {
             return false;
         }
     });
+    // --------------------------------------------------
+    // ヘルプアイコンを押した時の処理
+    // --------------------------------------------------  
+    $('.help-icon').on('click', function(e) {
+        e.stopPropagation();
+        let tooltip = $('.tooltip');
+        if (tooltip.css('display') == 'block') {
+            tooltip.css('display', 'none');
+        } else {
+            tooltip.css('display', 'block');
+        }
+    });
+    $('#result-list').on('click', function () {
+        let tooltip = $('.tooltip');
+        tooltip.css('display', 'none');
+    });
 }   
 
 /**

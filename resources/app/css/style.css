@@ -7,6 +7,7 @@ body {
 }
 a {
     text-decoration: none;
+    color: #000;
 }
 /* 枠線 */
 .border-line {
@@ -373,6 +374,42 @@ a {
   }
 /* 結果一覧ページ [result_list.html]
 ------------------------------- */
+#result-list .left-side {
+    display: flex;
+    flex-direction: row;
+}
+#result-list .help-area {
+	position:relative;
+}
+#result-list .help-icon {
+	border-radius:50%;
+    margin-top: 12px;
+    margin-left: 10px;
+	width:20px;
+	height:20px;
+	line-height:20px;
+	vertical-align:middle;
+	font-size:12px;
+	text-align:center;
+	background-color:#888888;
+	color:white;
+	cursor:pointer;
+}
+.tooltip {
+	position:absolute;
+	background-color:rgba(0,0,0,0.5);;
+	color:white;
+	border-radius:0.3em;
+	padding:0.3em;
+	margin:0.3em 0 0 1em;
+    width: 475px;
+	display:none;
+    z-index: 2;
+}
+.tooltip a {
+    color: #FFF;
+    text-decoration:underline;
+}
 #scene-count {
     margin-left: 20px;
 }
@@ -1245,4 +1282,53 @@ video {
     /*background: url("../images/rightArrow.png") no-repeat;*/
     background-size: contain;
     vertical-align: middle;
+}
+
+/* ヘルプ画面
+------------------------------- */
+#help-screen {
+    margin: 15px;
+    margin-bottom: 50px;
+}
+#help-screen p {
+    margin: 5px;
+    font-size: 18px;
+}
+#help-screen .description {
+    margin-top: 15px;
+    margin-left: 5px;
+}
+.description-img {
+    text-align : center;
+}
+.description-img img{
+    width: 70%;
+    height: 70%;
+    border: 1px solid  #000;
+}
+details {
+    font-size: 20px;
+    margin-left: 10px;
+    width: 80vw;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    padding: .5em .5em 0;
+}
+summary {
+    font-weight: bold;
+    margin: -.5em -.5em 0;
+    padding: .5em;
+}
+details[open] {
+    padding: .5em;
+}
+details[open] summary {
+    border-bottom: 1px solid #aaa;
+    margin-bottom: .5em;
+}
+.transition-msg {
+    text-align: right;
+}
+.transition-msg:hover {
+    color: #4699ca;;
 }
