@@ -614,13 +614,37 @@ function resultShowFunc() {
     // --------------------------------------------------
     updateAccessHistory(fileName);
 
-    // パンくずリストにファイル名を表示
-    $('.bread ul').append('<li>' + fileName + "</li>").trigger('create');
-    
-    // ファイル名とカット番号を表示
+    // 作品名とカット番号を表示
     let cutNo = 1;  // カット番号（初期値は１を設定）
 
-    $('#file-name').text(fileName);
+    // MySQLとのコネクションの作成
+    const connection = mysql.createConnection(mysql_setting);
+
+    // DB接続
+    connection.connect();
+
+    let qry = "SELECT product_name " +
+                "FROM works_data " +
+                "WHERE video_id='" + fileName + "';";
+    
+    // --------------------------------------------------
+    // SQL文の実行
+    // --------------------------------------------------
+    connection.query(qry, function (err, rows) {
+        // エラー処理
+        if (err) { 
+            console.log('err: ' + err); 
+        }
+
+        // パンくずリストにファイル名を表示
+        $('.bread ul').append('<li>' + rows[0].product_name + "</li>").trigger('create');
+        $('#file-name').text(rows[0].product_name);
+    });
+
+    // DB接続終了
+    connection.end();     
+
+    // カット番号の表示
     $('#cut-no').text(cutNo + 'シーン目');
     
     // --------------------------------------------------
