@@ -136,15 +136,12 @@ function exeFunc() {
             let fileName = files[i].name;   // ファイル名
             let filePath = files[i].path;   // ファイルのパス
 
-            // 拡張子が動画ファイル(.mp4)の時、
-            // 対象に同じファイルが存在しない時に分析対象とする
-            if(fileName.split('.').pop() === 'mp4' && !targetVideoList.includes(fileName)) {
-                $('#file-list ul').append('<li class="files margin-left">' + files[i].name + '</li>');   // 「分析するファイル一覧」に表示
+            // 「分析するファイル一覧」に表示
+            $('#file-list ul').append('<li class="files margin-left">' + files[i].name + '</li>'); 
 
-                targetVideoList.push(fileName); 
-                targetPathList.push(filePath);  
-                fileNum++;
-            }     
+            targetVideoList.push(fileName); 
+            targetPathList.push(filePath);  
+            fileNum++;
         }
 
         // ファイル数を表示
@@ -159,15 +156,15 @@ function exeFunc() {
     $('#start-btn').on('click', function() {
         // 動画が1つ以上セットされている時
         if(isVideoSet){
-            alert('現在、新規分析の機能は利用できません。');
-            /*
+            //alert('現在、新規分析の機能は利用できません。');
+            
             // 処理中のアニメーションを開始
             $('#my-spinner').removeClass('not-exe');
 
             // 実行            
             runAnalysis(targetPathList)
                 .then(confirmCompleted);
-            */            
+                     
         }
         else{
             alert('動画ファイルを右上領域にドラッグ&ドロップしてから押して下さい。');
@@ -949,8 +946,8 @@ function showAccessHistory() {
     // DB接続
     connection.connect();
 
-    let query = "SELECT * " +
-                "FROM access_history " +
+    let query = "SELECT works_data.video_id, works_data.product_name " +
+                "FROM access_history INNER JOIN works_data ON access_history.video_id = works_data.video_id " + 
                 "ORDER BY last_access_time DESC;";
     
     // --------------------------------------------------
@@ -985,7 +982,7 @@ function showAccessHistory() {
             $($div).append($img);
 
             // <p>要素を追加
-            let $p = $('<p class="video-name" data-video-name=' + videoName + '>' + videoName + '(' + cutNum + ')</p>');
+            let $p = $('<p class="video-name" data-video-name=' + videoName + '>' + rows[i].product_name + '</p>');
             $($div).append($p);
             // let $div = $('<div class="item"><img class="thumbnail" src=' + thumbnail + ' alt=""><p>' + videoName + '(' + cutNum + ')</p></div>');
 
