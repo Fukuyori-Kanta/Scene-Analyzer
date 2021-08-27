@@ -355,6 +355,9 @@ a {
 #file-num {
     margin-left: 25px;
 }
+#file-size {
+    margin-left: 25px;
+}
 #file-list {
     margin: 5px;
     overflow: auto;

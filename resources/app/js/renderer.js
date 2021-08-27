@@ -102,14 +102,19 @@ function exeFunc() {
     // --------------------------------------------------
     // 初期設定、必要要素の描画
     // --------------------------------------------------
-    // ファイル数(初期値)を表示
+    // 初期値の表示
     let fileNum = 0;    // ファイル数
+    let totalFileSize = 0;  // 合計ファイルサイズ
+    let shouldStarting = false;  // 処理開始フラグ
+    const sizeMaxThreshold = 15728640;   // 3MB（3145728）
     $('#file-num').text(fileNum);
+    $('#file-size').text(totalFileSize);
+    
     let index = 0;              // 結果表示中の動画インデックス
     let targetVideoList = [];   // 分析対象の動画ファイル名の配列
     let targetPathList = [];    // 分析対象の動画ファイルパスの配列
-    let isVideoSet = false;     // 動画設定フラグ（ファイルをD&Dするとtrue）
-    let isfirstClick = true;   // [結果を表示]ボタンを初回クリック時だけtrue
+    //let shouldStarting = false; // 処理開始フラグ（ファイルをD&Dするとtrue）
+    let isfirstClick = true;    // [結果を表示]ボタンを初回クリック時だけtrue
 
     // --------------------------------------------------
     // drag & drop でファイルの読み込み、ファイル一覧を表示
@@ -135,27 +140,51 @@ function exeFunc() {
 
             let fileName = files[i].name;   // ファイル名
             let filePath = files[i].path;   // ファイルのパス
+            let fileSize = files[i].size;   // ファイルのサイズ
 
-            // 「分析するファイル一覧」に表示
-            $('#file-list ul').append('<li class="files margin-left">' + files[i].name + '</li>'); 
+            // 拡張子が動画ファイル(.mp4)の時、
+            // 対象に同じファイルが存在しない時に分析対象とする
+            if(fileName.split('.').pop() === 'mp4' && !targetVideoList.includes(fileName)) {
+                // ファイルサイズ加算
+                totalFileSize += fileSize;
 
-            targetVideoList.push(fileName); 
-            targetPathList.push(filePath);  
-            fileNum++;
+                // 「分析するファイル一覧」に表示
+                $('#file-list ul').append('<li class="files margin-left">' + files[i].name + '</li>'); 
+
+                targetVideoList.push(fileName); 
+                targetPathList.push(filePath);  
+                fileNum++;
+            }   
         }
-
+        
         // ファイル数を表示
         $('#file-num').text(fileNum);
 
-        isVideoSet = true;
+        // ファイルサイズ表示
+        let organizedFileSize = Math.ceil(totalFileSize/(1024*1024) * Math.pow(10, 2)) / Math.pow(10, 2) // MB変換、小数点第3位切り上げ
+        $('#file-size').text(organizedFileSize + ' MB');
+
+        // ファイルサイズを判定  
+        // 上限を超えた場合、エラーメッセージの表示と現在のファイルサイズを赤字で表示
+        if(totalFileSize >= sizeMaxThreshold) {
+            // 赤字で表示
+            $('#file-size').css('color', 'red');
+            
+            // エラーメッセージを表示
+            alert('合計ファイルサイズが' + sizeMaxThreshold/(1024*1024) + 'MBを超えています。');
+        }
+        else {
+            // 分析開始フラグを立てる
+            shouldStarting = true;  
+        }
     });
 
     // --------------------------------------------------
     // [分析開始]ボタンをクリックした時、pythonで分析を開始
     // --------------------------------------------------
     $('#start-btn').on('click', function() {
-        // 動画が1つ以上セットされている時
-        if(isVideoSet){
+        // 分析開始フラグが立っている時
+        if(shouldStarting){
             //alert('現在、新規分析の機能は利用できません。');
             
             // 処理中のアニメーションを開始
@@ -167,7 +196,7 @@ function exeFunc() {
                      
         }
         else{
-            alert('動画ファイルを右上領域にドラッグ&ドロップしてから押して下さい。');
+            alert('動画ファイルを右上領域にドラッグ&ドロップしてから押して下さい。\nもしくは、ファイルサイズが上限を超えています。');
         }
     });
 
