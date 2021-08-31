@@ -1043,7 +1043,7 @@ video {
     font-weight: bold;
     z-index: 10;
 }
-.chart-wrap .number {
+.chart-wrap .count {
     position: absolute;
     top: 0;
     right: 0;
@@ -1066,7 +1066,7 @@ video {
 		text-align: right;
 		padding-left: 10px;
 	}
-	.chart-wrap .number {
+	.chart-wrap .count {
 		text-align: left;
 		padding-right: 0;
 	}
@@ -1076,7 +1076,7 @@ video {
 }
   
 @media screen and (max-width: 480px) {
-  	.chart-wrap .number {
+  	.chart-wrap .count {
 	  	width: 45px;
 	  	padding-right: 5px;
   	}
