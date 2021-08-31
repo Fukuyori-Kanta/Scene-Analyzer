@@ -17,6 +17,8 @@ const mysql_setting = {
     password : 'password',
     database: 'analysis_db'
 }
+let database = require('../js/resultQuery');
+const mydb = new database(mysql_setting); 
 
 // --------------------------------------------------
 // HTMLが読み込まれたら（起動時）
@@ -969,40 +971,27 @@ function statisticsFunc() {
  * DBからアクセス履歴を降順に取得し、直近5件のコンテンツを表示
  */
 function showAccessHistory() {   
-    // MySQLとのコネクションの作成
-    const connection = mysql.createConnection(mysql_setting);
-
-    // DB接続
-    connection.connect();
-
+    // 問い合わせするSQL文
     let query = "SELECT works_data.video_id, works_data.product_name " +
                 "FROM access_history INNER JOIN works_data ON access_history.video_id = works_data.video_id " + 
                 "ORDER BY last_access_time DESC;";
     
-    // --------------------------------------------------
-    // SQL文の実行
-    // --------------------------------------------------
-    connection.query(query, function (err, rows) {
-        // エラー処理
-        if (err) { 
-            console.log('err: ' + err); 
-        } 
-
+    // 接続・問い合わせ
+    mydb.query(query).then((results) => { 
         // --------------------------------------------------
         // 5件のコンテンツを表示
         // --------------------------------------------------
         const displayCount = 5; // 表示件数
+
         for(let i = 0; i < displayCount; i++) {
-            let videoName = rows[i].video_id;   // 動画名
-            
-            // カット数を取得
-            let targetFolderPath = path.join(__dirname, '../result/thumbnail/', videoName);
-            let cutNum = getFolderList(targetFolderPath).length;
+            let videoName = results[i].video_id;   // 動画ID
+            let product_name = results[i].product_name  /// 作品名
 
             // サムネ画像のパスを取得
+            // TODO: パスを取得する関数にする
             let thumbnail = '../result/thumbnail/' + videoName + '/thumbnail1.jpg'
                 
-            // 各要素の作成・追加
+            // 表示コンテンツ（サムネイルと作品名）の作成・追加
             // <div>要素を作成
             let $div = $('<div class="item"></div>');
 
@@ -1011,16 +1000,17 @@ function showAccessHistory() {
             $($div).append($img);
 
             // <p>要素を追加
-            let $p = $('<p class="video-name" data-video-name=' + videoName + '>' + rows[i].product_name + '</p>');
+            let $p = $('<p class="video-name" data-video-name=' + videoName + '>' + product_name + '</p>');
             $($div).append($p);
-            // let $div = $('<div class="item"><img class="thumbnail" src=' + thumbnail + ' alt=""><p>' + videoName + '(' + cutNum + ')</p></div>');
 
             $('#access-history').append($div);
         }
+    }, (error) => {
+        console.log("error:", error.message);
     });
 
-    // DB接続終了
-    connection.end();           
+    // 接続終了
+    mydb.close();
 }
 
 /**
@@ -1036,69 +1026,29 @@ function getFolderList(targetFolderPath) {
     return allDirents.filter(dirent => dirent.isFile()).map(({ name }) => name);
 }
 
-
-
 /**
  * 動画名の配列を受け取り、それらの動画を表示する
  * @param  {Array} videos 表示する動画名の配列
  */
 function showVideos(videos) {
-    /*
-    videos.forEach(videoName => {
-        // カット数を取得
-        let cutNum = getFolderList(path.join(__dirname, '../result/thumbnail/', videoName)).length;
-
-        // サムネ画像のパスを取得
-        let thumbnail = '../result/thumbnail/' + videoName + '/thumbnail1.jpg'
-            
-        // 各要素の作成・追加
-        // <div>要素を作成
-        let $div = $('<div class="item"></div>');
-
-        // <img>要素を追加
-        let $img = $('<img data-video-name=' + videoName + ' class="thumbnail" src=' + thumbnail + ' alt="">');
-        $($div).append($img);
-
-        // <p>要素を追加
-        let $p = $('<p class="video-name" data-video-name=' + videoName + '>' + videoName + '(' + cutNum + ')</p>');
-        $($div).append($p);
-        // let $div = $('<div class="item"><img class="thumbnail" src=' + thumbnail + ' alt=""><p>' + videoName + '(' + cutNum + ')</p></div>');
-
-        $('#video-list').append($div);
-    });
-    */
-
-    // MySQLとのコネクションの作成
-    const connection = mysql.createConnection(mysql_setting);
-    
-    // DB接続
-    connection.connect();
-
+    // 問い合わせするSQL文
     let query = "SELECT video_id, product_name " +
                 "FROM works_data " +
                 "ORDER BY video_id";
-                
-    // --------------------------------------------------
-    // SQL文の実行
-    // --------------------------------------------------
-    connection.query(query, function (err, rows) {
-        // エラー処理
-        if (err) { 
-            console.log('err: ' + err); 
-        }        
+    
+    // 接続・問い合わせ
+    mydb.query(query).then((results) => { 
         // --------------------------------------------------
         // サムネイルと作品名の表示
         // --------------------------------------------------
-        for(let data of rows) {
+        for(let data of results) {
             let videoName = data.video_id;  // 動画ID
-
-            // シーン数を取得
-            let sceneNum = getFolderList(path.join(__dirname, '../result/thumbnail/', videoName)).length;
+            let product_name = data.product_name;   // 作品名
 
             // サムネ画像のパスを取得
             let thumbnail = '../result/thumbnail/' + videoName + '/thumbnail1.jpg'
                 
-            // 各要素の作成・追加
+            // 表示コンテンツ（サムネイルと作品名）の作成・追加
             // <div>要素を作成
             let $div = $('<div class="item"></div>');
 
@@ -1107,15 +1057,17 @@ function showVideos(videos) {
             $($div).append($img);
 
             // <p>要素を追加
-            let $p = $('<p class="video-name" data-video-name=' + videoName + '>' + data.product_name + '</p>');
+            let $p = $('<p class="video-name" data-video-name=' + videoName + '>' + product_name + '</p>');
             $($div).append($p);
-            // シーン数を追加
-            //let $p1 = $('<p class="scene-num" data-video-name=' + videoName + '>' + sceneNum + ' シーン</p>');
-            //$($div).append($p1);
 
             $('#video-list').append($div);
         }
+    }, (error) => {
+        console.log("error:", error.message);
     });
+
+    // 接続終了
+    mydb.close();
 }
 
 /**
@@ -1124,25 +1076,13 @@ function showVideos(videos) {
  * @param  {int} sceneNo 該当パスの配列
  */
 function showLabelData(fileName, sceneNo) {   
-    // MySQLとのコネクションの作成
-    const connection = mysql.createConnection(mysql_setting);
-    
-    // DB接続
-    connection.connect();
-
+    // 問い合わせするSQL文
     let query = "SELECT * " +
                 "FROM scene_data LEFT JOIN labels_data ON scene_data.labels_id=labels_data.labels_id " +
                 "WHERE video_id='" + fileName + "' AND scene_no='scene_" + sceneNo + "';";
     
-    // --------------------------------------------------
-    // SQL文の実行
-    // --------------------------------------------------
-    connection.query(query, function (err, rows) {
-        // エラー処理
-        if (err) { 
-            console.log('err: ' + err); 
-        }        
-
+    // 接続・問い合わせ
+    mydb.query(query).then((results) => { 
         // --------------------------------------------------
         // ラベルの表示
         // --------------------------------------------------
@@ -1150,26 +1090,29 @@ function showLabelData(fileName, sceneNo) {
         $labels.empty();   // 前のラベルデータを削除
 
         // ラベルが1個もない時
-        if(rows[0].labels_id == null) {
+        if(results[0].labels_id == null) {
             $labels.append('<div class="no-label">このシーンにはラベルは付与されていません。</div>');
         } 
         else {
-            for(let i = 0; i < rows.length; i++) {       
+            for(let i = 0; i < results.length; i++) {     
+                let label = results[i].label // ラベル名
                 let $labelItem = $('<div data-label-id="' + Number(i+1) + '" class="label-item"></div>');
-                $labelItem.append('<h3 class="label">' + rows[i].label + '</h3>');
+                $labelItem.append('<h3 class="label">' + label + '</h3>');
                 $labels.append($labelItem);
             }
         }
-
         // --------------------------------------------------
         // 好感度の表示
         // --------------------------------------------------        
-        $('#favo').text(rows[0].favo_value);
+        $('#favo').text(results[0].favo_value);
 
+    }, (error) => {
+        console.log("error:", error.message);
     });
-
-    // DB接続終了
-    connection.end();           
+    
+    // 接続終了
+    // ここでは、終了するとエラーになる（要調査）
+    // mydb.close();   
 }
 
 /**
@@ -1177,12 +1120,6 @@ function showLabelData(fileName, sceneNo) {
  * @param  {str} searchWord 検索ワード
  */
 function search_sql(searchWord, searchOption) {
-    // MySQLとのコネクションの作成
-    const connection = mysql.createConnection(mysql_setting);
-    
-    // DB接続
-    connection.connect();
-
     const words = searchWord.split('　');   // 検索ワード
     let query = "";     // 実行するクエリ
     let videos = [];    // 表示する動画名の配列
@@ -1250,20 +1187,12 @@ function search_sql(searchWord, searchOption) {
                 break;
         }
     }
-
-    // --------------------------------------------------
-    // SQL文の実行
-    // --------------------------------------------------
-    connection.query(query, function (err, rows) {
-        // エラー処理
-        if (err) { 
-            console.log('err: ' + err); 
-        } 
-
-        for(let data of rows) {
+    
+    // 接続・問い合わせ
+    mydb.query(query).then((results) => { 
+        for(let data of results) {
             videos.push(data.video_id);
         }
-
         // 件数を表示
         $('#scene-count').text(videos.length);
 
@@ -1275,16 +1204,13 @@ function search_sql(searchWord, searchOption) {
         // --------------------------------------------------
         // サムネイルと作品名の表示
         // --------------------------------------------------
-        for(let data of rows) {
+        for(let data of results) {
             let videoName = data.video_id;  // 動画ID
-
-            // シーン数を取得
-            let sceneNum = getFolderList(path.join(__dirname, '../result/thumbnail/', videoName)).length;
 
             // サムネ画像のパスを取得
             let thumbnail = '../result/thumbnail/' + videoName + '/thumbnail1.jpg'
                 
-            // 各要素の作成・追加
+            // 表示コンテンツ（サムネイルと作品名）の作成・追加
             // <div>要素を作成
             let $div = $('<div class="item"></div>');
 
@@ -1295,16 +1221,16 @@ function search_sql(searchWord, searchOption) {
             // <p>要素を追加
             let $p = $('<p class="video-name" data-video-name=' + videoName + '>' + data.product_name + '</p>');
             $($div).append($p);
-            // シーン数を追加
-            //let $p1 = $('<p class="scene-num" data-video-name=' + videoName + '>' + sceneNum + ' シーン</p>');
-            //$($div).append($p1);
 
             $('#video-list').append($div);
         }
+
+    }, (error) => {
+        console.log("error:", error.message);
     });
-        
+    
     // 接続終了
-    connection.end();        
+    mydb.close();   
 }
 
 /**
@@ -1335,28 +1261,15 @@ function updateAccessHistory(fileName) {
     connection.end();           
 }
 
-
 function showGragh() {
-    // MySQLとのコネクションの作成
-    const connection = mysql.createConnection(mysql_setting);
-
-    // DB接続
-    connection.connect();
-
+    // 問い合わせするSQL文
     let query = "SELECT * " +
-                "FROM ranking LEFT JOIN score_category ON ranking.category = score_category.category;";
+    "FROM ranking LEFT JOIN score_category ON ranking.category = score_category.category;";
 
-    // --------------------------------------------------
-    // SQL文の実行
-    // --------------------------------------------------
-    connection.query(query, function (err, rows) {
-        // エラー処理
-        if (err) { 
-            console.log('err: ' + err); 
-        } 
-
+    // 接続・問い合わせ
+    mydb.query(query).then((results) => { 
         // イテレータ作成
-        let rankingData = rows; // ランキングのデータ
+        let rankingData = results; // ランキングのデータ
         let it = [];    // イテレータ
         for(const data of rankingData) {
             /*
@@ -1445,7 +1358,13 @@ function showGragh() {
             // 棒グラフの設定
             generateBarGraph('#dashboard-stats');   
         }
-    });    
+
+    }, (error) => {
+        console.log("error:", error.message);
+    });
+    
+    // 接続終了
+    mydb.close();   
 }
 
 function generateBarGraph(wrapper) {
