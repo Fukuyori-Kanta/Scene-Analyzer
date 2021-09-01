@@ -18,7 +18,7 @@ app.on("ready", () => {
   });
   
   // メニューバーを削除
-  mainWindow.setMenu(null);
+  //mainWindow.setMenu(null);
   /*
   // 開発者ツールが開かれた場合
   mainWindow.webContents.on('devtools-opened', () => {
