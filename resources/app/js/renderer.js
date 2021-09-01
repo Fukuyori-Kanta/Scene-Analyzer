@@ -26,7 +26,9 @@ const mydb = new database(mysql_setting);
 $(function() {
     // [index.html] に対しての処理
     if($('#index').length) {
-        indexFunc();
+        const topPageFunc = require('../js/topPage');
+        topPageFunc.showAccessHistory();
+        topPageFunc.transitionToResultShow();
     }
     // [exe.html] に対しての処理
     if($('#exe').length) {
@@ -76,28 +78,6 @@ $(function() {
         window.location.reload(true);
     });
 });
-
-/**
- * [index.html] に対しての処理
- */
-function indexFunc() {
-    // --------------------------------------------------
-    //  直近の閲覧履歴順に5件を表示
-    // --------------------------------------------------
-    showAccessHistory();
-
-    // --------------------------------------------------
-    //  動画がクリックされたら、[result_show.html]に該当の動画名を渡して遷移
-    // --------------------------------------------------
-    $('#access-history').on('click', function(e) {
-        const videoName = e.target.getAttribute('data-video-Name');   // 動画名
-
-        // 動画表示領域クリック時（動画名の取得時）のみ遷移
-        if(videoName) {
-            location.href = 'result_show.html?name=' +  encodeURIComponent(videoName);
-        }
-    });
-}
 
 /**
  * [exe.html] に対しての処理
@@ -962,52 +942,6 @@ function resultShowFunc() {
         // 縦スクロールさせない
         return false;
     });
-}
-
-/**
- * DBからアクセス履歴を降順に取得し、直近5件のコンテンツを表示
- */
-function showAccessHistory() {   
-    // 問い合わせするSQL文
-    let query = "SELECT works_data.video_id, works_data.product_name " +
-                "FROM access_history INNER JOIN works_data ON access_history.video_id = works_data.video_id " + 
-                "ORDER BY last_access_time DESC;";
-    
-    // 接続・問い合わせ
-    mydb.query(query).then((results) => { 
-        // --------------------------------------------------
-        // 5件のコンテンツを表示
-        // --------------------------------------------------
-        const displayCount = 5; // 表示件数
-
-        for(let i = 0; i < displayCount; i++) {
-            let videoName = results[i].video_id;   // 動画ID
-            let product_name = results[i].product_name  /// 作品名
-
-            // サムネ画像のパスを取得
-            // TODO: パスを取得する関数にする
-            let thumbnail = '../result/thumbnail/' + videoName + '/thumbnail1.jpg'
-                
-            // 表示コンテンツ（サムネイルと作品名）の作成・追加
-            // <div>要素を作成
-            let $div = $('<div class="item"></div>');
-
-            // <img>要素を追加
-            let $img = $('<img data-video-name=' + videoName + ' class="thumbnail" src=' + thumbnail + ' alt="">');
-            $($div).append($img);
-
-            // <p>要素を追加
-            let $p = $('<p class="video-name" data-video-name=' + videoName + '>' + product_name + '</p>');
-            $($div).append($p);
-
-            $('#access-history').append($div);
-        }
-    }, (error) => {
-        console.log("error:", error.message);
-    });
-
-    // 接続終了
-    mydb.close();
 }
 
 /**
