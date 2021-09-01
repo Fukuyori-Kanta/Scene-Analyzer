@@ -22,6 +22,9 @@ async function getRankingData() {
     // 接続・問い合わせ
     let rankingData = await mydb.query(query);  // ランキングデータ
 
+    // 接続終了
+    mydb.close();
+    
     return rankingData
 }
 
