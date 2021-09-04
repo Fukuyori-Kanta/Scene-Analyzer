@@ -1,14 +1,14 @@
 // requireの設定
 const { SSL_OP_SSLEAY_080_CLIENT_DH_BUG, SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION } = require('constants');
-const fs = require('fs');
 const path = require('path');
-const naturalSort = require("javascript-natural-sort");
 //const { dir } = require('console');
 window.jQuery = window.$ = require('jquery');   // electron上でjquery使う場合、ローカルに置かないと機能しない
 let { PythonShell } = require('python-shell');
 //const { getHeapCodeStatistics } = require('v8');
 const mysql = require('mysql');
 const { type } = require('os');
+
+const fileOperationModule = require('../js/file-operation-module');   // ファイル操作モジュール 
 
 // MySQLとのコネクションの作成
 const mysql_setting = {
@@ -126,13 +126,9 @@ function resultListFunc() {
     // --------------------------------------------------
     else {
         // 結果を動画名ごとにまとめて取得
-        const dirents = fs.readdirSync(path.join(__dirname, '../result/thumbnail'), { withFileTypes: true });
-        const videos = [];
-        for (const dirent of dirents) {
-            if (dirent.isDirectory()) {
-                videos.push(dirent.name);
-            } 
-        }
+        
+        let videos = fileOperationModule.getAllVideoID();   // 全動画名を取得
+
         // 件数を表示
         $('#scene-count').text(videos.length);
 
@@ -269,8 +265,8 @@ function resultShowFunc() {
     let targetFolderPath = path.join(cutImgPath, fileName)    // 該当フォルダのパス
 
     // 該当フォルダのカット画像一覧を取得
-    let folderList = getFolderList(targetFolderPath).sort(naturalSort); // カット画像のファイル名一覧
-    
+    let fileList = fileOperationModule.getFileList(targetFolderPath); // カット画像のファイル名一覧
+
     // 動画の表示
     let $currentVideo = $('#movie-screen'); // 現在表示中の動画 
 
@@ -284,11 +280,11 @@ function resultShowFunc() {
     $currentVideo.append($video);
 
     // カット数を表示
-    $('#cut-cnt').text(folderList.length);
+    $('#cut-cnt').text(fileList.length);
 
     // カット一覧表示
     let $videoList = $('#scene-list');  // カット一覧
-    for(let i = 0, len = folderList.length; i < len; i++){
+    for(let i = 0, len = fileList.length; i < len; i++){
         // <li>要素を作成
         let $li = $('<li></li>');
         $li.attr('class', 'item');
@@ -298,7 +294,7 @@ function resultShowFunc() {
         $cutImg.attr({
             'data-cut-no': i+1,
             'class': 'cut-img',
-            'src': path.join(cutImgPath, fileName, folderList[i])
+            'src': path.join(cutImgPath, fileName, fileList[i])
         });
 
         // ノードの組み立て
@@ -551,19 +547,6 @@ function resultShowFunc() {
 }
 
 /**
- * 該当パスのフォルダ内のファイル情報（ファイル名）を返す関数
- * @param  {str} targetFolderPath 該当パス
- * @return {object}     ファイル名を格納したobject
- */
-function getFolderList(targetFolderPath) {
-    // 該当パス直下のファイルやディレクトリ全てがDirentオブジェクトの配列で返ってくる
-    const allDirents = fs.readdirSync(targetFolderPath, { withFileTypes: true });
-    //const allDirents = path.join(__dirname, '../'+targetFolderPath);
-
-    return allDirents.filter(dirent => dirent.isFile()).map(({ name }) => name);
-}
-
-/**
  * 動画名の配列を受け取り、それらの動画を表示する
  * @param  {Array} videos 表示する動画名の配列
  */
@@ -583,14 +566,14 @@ function showVideos(videos) {
             let product_name = data.product_name;   // 作品名
 
             // サムネ画像のパスを取得
-            let thumbnail = '../result/thumbnail/' + videoName + '/thumbnail1.jpg'
+            let thumbnailPath = fileOperationModule.getThumbnailPath(videoName);  // サムネ画像のパス
                 
             // 表示コンテンツ（サムネイルと作品名）の作成・追加
             // <div>要素を作成
             let $div = $('<div class="item"></div>');
 
             // <img>要素を追加
-            let $img = $('<img data-video-name=' + videoName + ' class="thumbnail" src=' + thumbnail + ' alt="">');
+            let $img = $('<img data-video-name=' + videoName + ' class="thumbnail" src=' + thumbnailPath + ' alt="">');
             $($div).append($img);
 
             // <p>要素を追加
@@ -745,14 +728,14 @@ function search_sql(searchWord, searchOption) {
             let videoName = data.video_id;  // 動画ID
 
             // サムネ画像のパスを取得
-            let thumbnail = '../result/thumbnail/' + videoName + '/thumbnail1.jpg'
-                
+            let thumbnailPath = fileOperationModule.getThumbnailPath(videoName);  // サムネ画像のパス
+
             // 表示コンテンツ（サムネイルと作品名）の作成・追加
             // <div>要素を作成
             let $div = $('<div class="item"></div>');
 
             // <img>要素を追加
-            let $img = $('<img data-video-name=' + videoName + ' class="thumbnail" src=' + thumbnail + ' alt="">');
+            let $img = $('<img data-video-name=' + videoName + ' class="thumbnail" src=' + thumbnailPath + ' alt="">');
             $($div).append($img);
 
             // <p>要素を追加

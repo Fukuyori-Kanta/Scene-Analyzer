@@ -1,9 +1,11 @@
 ﻿
+const fileOperationModule = require('../js/file-operation-module');   // ファイル操作モジュール 
+
 /**
  * DBからアクセス履歴を降順に取得し、直近5件のコンテンツを表示
  * @module showAccessHistory
  */
- exports.showAccessHistory = async function() {
+exports.showAccessHistory = async function() {
     // --------------------------------------------------
     // アクセス履歴を取得
     // --------------------------------------------------
@@ -19,15 +21,14 @@
         let product_name = accessHistory[i].product_name  /// 作品名
 
         // サムネ画像のパスを取得
-        // TODO: パスを取得する関数にする
-        let thumbnail = '../result/thumbnail/' + videoName + '/thumbnail1.jpg'
+        let thumbnailPath = fileOperationModule.getThumbnailPath(videoName);  // サムネ画像のパス
             
         // 表示コンテンツ（サムネイルと作品名）の作成・追加
         // <div>要素を作成
         let $div = $('<div class="item"></div>');
 
         // <img>要素を追加
-        let $img = $('<img data-video-name=' + videoName + ' class="thumbnail" src=' + thumbnail + ' alt="">');
+        let $img = $('<img data-video-name=' + videoName + ' class="thumbnail" src=' + thumbnailPath + ' alt="">');
         $($div).append($img);
 
         // <p>要素を追加
