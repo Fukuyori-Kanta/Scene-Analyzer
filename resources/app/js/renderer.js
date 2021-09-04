@@ -8,6 +8,9 @@ let { PythonShell } = require('python-shell');
 const mysql = require('mysql');
 const { type } = require('os');
 
+const topPageModule = require('../js/top-page-module');
+const newAnalysisModule = require('../js/new-analysis-module');
+const statisticsModule = require('../js/statistics-module');
 const fileOperationModule = require('../js/file-operation-module');   // ファイル操作モジュール 
 
 // MySQLとのコネクションの作成
@@ -17,7 +20,7 @@ const mysql_setting = {
     password : 'password',
     database: 'analysis_db'
 }
-let database = require('../js/resultQuery');
+let database = require('../js/result-query-module');
 const mydb = new database(mysql_setting); 
 
 // --------------------------------------------------
@@ -26,14 +29,12 @@ const mydb = new database(mysql_setting);
 $(function() {
     // [index.html] に対しての処理
     if($('#index').length) {
-        const topPageFunc = require('../js/topPage');
-        topPageFunc.showAccessHistory();
-        topPageFunc.transitionToResultShow();
+        topPageModule.showAccessHistory();
+        topPageModule.transitionToResultShow();
     }
     // [exe.html] に対しての処理
     if($('#exe').length) {
-        const topPageFunc = require('../js/new_analysis.js');
-        topPageFunc.analyzeNewly();
+        newAnalysisModule.analyzeNewly();
     }
     // [result-list.html] に対しての処理
     if($('#result-list').length) {
@@ -46,8 +47,7 @@ $(function() {
     // [statistics.html] に対しての処理
     if($('#statistics').length) {
         // 統計結果のグラフを表示
-        const statisticsFunc = require('../js/statistics');
-        statisticsFunc.showStatistics();
+        statisticsModule.showStatistics();
     }
 
     // スクロールを禁止する関数
