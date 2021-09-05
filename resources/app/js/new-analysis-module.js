@@ -1,87 +1,36 @@
-﻿/**
+﻿const fs = require('fs');
+const fileOperationModule = require('../js/file-operation-module'); // ファイル操作モジュール 
+
+/**
  * 新規分析を行う関数
  * @module analyzeNewly
  */
-exports.analyzeNewly = async function() {
+ exports.analyzeNewly = async function() {
     // --------------------------------------------------
     // 初期設定、必要要素の描画
     // --------------------------------------------------
-    // 初期値の表示
-    let fileNum = 0;    // ファイル数
-    let totalFileSize = 0;  // 合計ファイルサイズ
-    let shouldStarting = false;  // 処理開始フラグ
-    const sizeMaxThreshold = 15728640;   // 3MB（3145728）
-    $('#file-num').text(fileNum);
-    $('#file-size').text(totalFileSize);
-    
-    let index = 0;              // 結果表示中の動画インデックス
+    // 変数の初期化
     let targetVideoList = [];   // 分析対象の動画ファイル名の配列
     let targetPathList = [];    // 分析対象の動画ファイルパスの配列
-    //let shouldStarting = false; // 処理開始フラグ（ファイルをD&Dするとtrue）
+    let fileCount = 0;          // ファイル数
+    let totalFileSize = 0;      // 合計ファイルサイズ
+    const sizeMaxThreshold = 15728640;   // 入力ファイルサイズの上限（15 MB）
+    
+    let index = 0;              // 結果表示中の動画インデックス
+    let shouldStarting = false; // 処理開始フラグ
     let isfirstClick = true;    // [結果を表示]ボタンを初回クリック時だけtrue
+   
+    // 初期値の描画
+    // ファイル数を表示
+    $('#file-num').text(fileCount);
 
+    // ファイルサイズを表示
+    $('#file-size').text(totalFileSize);
+    
     // --------------------------------------------------
-    // drag & drop でファイルの読み込み、ファイル一覧を表示
+    // ファイルが入力された時、入力されたファイル数・サイズを表示
     // --------------------------------------------------
-    $('#drop-area').on("dragover", function(e) {
-        // ブラウザの機能をキャンセル
-        e.preventDefault(); 
-    });
-
-    $('#drop-area').on("drop", function(_e){
-        let e = _e;
-        if( _e.originalEvent ){
-            e = _e.originalEvent;
-        }
-        // ブラウザの機能をキャンセル
-        e.preventDefault(); 
-        
-        // ファイルの取り出し
-        let files = e.dataTransfer.files;
-        
-        // D&Dされたファイルの情報を表示 及び 配列に格納
-        for (let i = 0; i < files.length; i++) {
-
-            let fileName = files[i].name;   // ファイル名
-            let filePath = files[i].path;   // ファイルのパス
-            let fileSize = files[i].size;   // ファイルのサイズ
-
-            // 拡張子が動画ファイル(.mp4)の時、
-            // 対象に同じファイルが存在しない時に分析対象とする
-            if(fileName.split('.').pop() === 'mp4' && !targetVideoList.includes(fileName)) {
-                // ファイルサイズ加算
-                totalFileSize += fileSize;
-
-                // 「分析するファイル一覧」に表示
-                $('#file-list ul').append('<li class="files margin-left">' + files[i].name + '</li>'); 
-
-                targetVideoList.push(fileName); 
-                targetPathList.push(filePath);  
-                fileNum++;
-            }   
-        }
-        
-        // ファイル数を表示
-        $('#file-num').text(fileNum);
-
-        // ファイルサイズ表示
-        let organizedFileSize = Math.ceil(totalFileSize/(1024*1024) * Math.pow(10, 2)) / Math.pow(10, 2) // MB変換、小数点第3位切り上げ
-        $('#file-size').text(organizedFileSize + ' MB');
-
-        // ファイルサイズを判定  
-        // 上限を超えた場合、エラーメッセージの表示と現在のファイルサイズを赤字で表示
-        if(totalFileSize >= sizeMaxThreshold) {
-            // 赤字で表示
-            $('#file-size').css('color', 'red');
-            
-            // エラーメッセージを表示
-            alert('合計ファイルサイズが' + sizeMaxThreshold/(1024*1024) + 'MBを超えています。');
-        }
-        else {
-            // 分析開始フラグを立てる
-            shouldStarting = true;  
-        }
-    });
+    onLoadedFile();
 
     // --------------------------------------------------
     // [分析開始]ボタンをクリックした時、pythonで分析を開始
@@ -97,13 +46,11 @@ exports.analyzeNewly = async function() {
             // 実行            
             runAnalysis(targetPathList)
                 .then(confirmCompleted);
-                     
         }
         else{
             alert('動画ファイルを右上領域にドラッグ&ドロップしてから押して下さい。\nもしくは、ファイルサイズが上限を超えています。');
         }
     });
-
 
     // --------------------------------------------------
     // [結果を見る]ボタンをクリック時、モーダルウィンドウでプレビュー表示
@@ -133,15 +80,17 @@ exports.analyzeNewly = async function() {
             }); 
         });
   
-        //画面の左上からmodal-mainの横幅・高さを引き、その値を2で割ると画面中央の位置が計算できます
-        //$(window).resize(modalResize);
+        /**
+         * モーダルウィンドウのサイズを変更する関数
+         * 画面の左上からmodal-mainの横幅・高さを引き、
+         * その値を2で割ることで画面中央の位置を算出
+         */
         function modalResize(){
+            let w = $(window).width();  // ウィンドウサイズ（幅）
+            let h = $(window).height(); // ウィンドウサイズ（高さ）
   
-            var w = $(window).width();
-            var h = $(window).height();
-  
-            var cw = $("#modal-main").outerWidth();
-            var ch = $("#modal-main").outerHeight();
+            let cw = $("#modal-main").outerWidth();
+            let ch = $("#modal-main").outerHeight();
   
             //取得した値をcssに追加する
             $("#modal-main").css({
@@ -180,22 +129,19 @@ exports.analyzeNewly = async function() {
         showModal(index);
     });
 
-    // モーダルウィンドウを表示する（初回のみ）
+    /**
+     * モーダルウィンドウを表示する（初回のみ）
+     * モーダルウィンドウ内に結果詳細画面のレイアウトで分析結果を表示する
+     * @param  {str} index 結果表示する動画のインデックス
+     */
     function showModal(index) {
         // 各種フォルダパス 
-        const resultPath = path.join(__dirname, '../python/temp');     // resultフォルダのパス
-        const cutPath = path.join(resultPath, 'cut');      // カット動画フォルダのパス
-        const cutImgPath = path.join(resultPath, 'cut_img'); // カット画像フォルダのパス
+        const resultPath = path.join(__dirname, '../python/temp');  // resultフォルダのパス
+        const cutPath = path.join(resultPath, 'cut');               // カット動画フォルダのパス
+        const cutImgPath = path.join(resultPath, 'cut_img');        // カット画像フォルダのパス
 
-        // --------------------------------------------------
-        // 動画情報を[result_list.html]から取得、表示
-        // --------------------------------------------------
-        const fileNames = fs.readdirSync(cutPath);  // カット保存フォルダのファイル名の配列
-        const fileName = fileNames[index];
-        // --------------------------------------------------
-        // アクセス履歴を更新
-        // --------------------------------------------------
-        updateAccessHistory(fileName);
+        const fileNames = fs.readdirSync(cutPath);  // カット動画フォルダ内のファイル名の配列
+        const fileName = fileNames[index];  // 現在、結果表示する動画名
 
         let cutNo = 1;  // カット番号（初期値は１を設定）
 
@@ -209,7 +155,8 @@ exports.analyzeNewly = async function() {
         let targetFolderPath = path.join(cutImgPath, fileName)    // 該当フォルダのパス
         
         // 該当フォルダのカット画像一覧を取得
-        let folderList = getFolderList(targetFolderPath).sort(naturalSort); // カット画像のファイル名一覧
+        
+        let fileList = fileOperationModule.getFileList(targetFolderPath); // カット画像のファイル名一覧
 
         // 動画の表示
         let $currentVideo = $('#movie-screen'); // 現在表示中の動画 
@@ -225,11 +172,11 @@ exports.analyzeNewly = async function() {
         $currentVideo.append($video);
 
         // カット数を表示
-        $('#cut-cnt').text(folderList.length);
+        $('#cut-cnt').text(fileList.length);
 
         // カット一覧表示
         let $videoList = $('#modal-main #scene-list');  // カット一覧
-        for(let i = 0, len = folderList.length; i < len; i++){
+        for(let i = 0, len = fileList.length; i < len; i++){
             // <li>要素を作成
             let $li = $('<li></li>');
             $li.attr('class', 'item');
@@ -239,8 +186,7 @@ exports.analyzeNewly = async function() {
             $cutImg.attr({
                 'data-cut-no': i+1,
                 'class': 'cut-img',
-                //'src': path.join('..', cutImgPath, fileName, folderList[i])
-                'src': path.join(cutImgPath, fileName, folderList[i])
+                'src': path.join(cutImgPath, fileName, fileList[i])
             });
 
             // ノードの組み立て
@@ -306,10 +252,15 @@ exports.analyzeNewly = async function() {
         })   
     }
 
+    /**
+     * Python側の分析処理が完了したかを確認する関数
+     * 実行結果のフォルダ内のファイル（fileNames）と実行対象のファイルを比較する
+     * 一致した場合は正常に処理が完了、一致しない場合は処理に失敗
+     * @return  {Boolean} 分析処理が完了したかどうか
+     */
     const confirmCompleted = function() {
         return new Promise(function(resolve, reject){
             const cutPath = path.join(__dirname, '../python/temp/cut');  // カット保存パス
-            console.log(cutPath)
             const fileNames = fs.readdirSync(cutPath);  // カット保存フォルダのファイル名の配列
             
             let targetNames = [];   // 実行対象のファイル名の配列
@@ -325,39 +276,47 @@ exports.analyzeNewly = async function() {
 
             // 正常に処理されたか確認
             Array.prototype.equals = function (array) {
-                // if the other array is a falsy value, return
+                // 比較する方が配列ではない場合
                 if (!array)
                     return false;
             
-                // compare lengths - can save a lot of time 
+                // 配列の長さを比較
                 if (this.length != array.length)
                     return false;
             
-                for (var i = 0, l=this.length; i < l; i++) {
-                    // Check if we have nested arrays
+                for (let i = 0, l = this.length; i < l; i++) {
+                    // ネストされた配列かどうか
                     if (this[i] instanceof Array && array[i] instanceof Array) {
-                        // recurse into the nested arrays
+                        // ネストの配列に再帰
                         if (!this[i].equals(array[i]))
                             return false;       
                     }           
                     else if (this[i] != array[i]) { 
-                        // Warning - two different object instances will never be equal: {x:20} != {x:20}
                         return false;   
                     }           
                 }       
                 return true;
             }   
 
-            function s(x,y){
-                var pre = ['string' , 'number' , 'bool']
-                if(typeof x!== typeof y )return pre.indexOf(typeof y) - pre.indexOf(typeof x);
-            
-                if(x === y)return 0;
-                else return (x > y)?1:-1;
-            
+            /**
+             * ソートする際の比較関数
+             * @return  {Number}  ソートのインデックス
+             */
+            function s(x, y){
+                let pre = ['string' , 'number' , 'bool']
+                if(typeof x!== typeof y) {
+                    return pre.indexOf(typeof y) - pre.indexOf(typeof x);
+                }
+                if(x === y) {
+                    return 0;
+                }
+                else {
+                    return (x > y)?1:-1;
+                }
             }
-            var arr1 = fileNames.sort(s);
-            var arr2 = targetNames.sort(s);
+
+            let arr1 = fileNames.sort(s);
+            let arr2 = targetNames.sort(s);
             
             console.log(arr1.equals(arr2));// true
 
@@ -390,6 +349,87 @@ exports.analyzeNewly = async function() {
             
             fs.existsSync(path)
             */
-        })
+        });
+    }
+
+    /**
+     * ファイルが入力された時の処理
+     * 合計ファイルサイズのチェック、入力されたファイル数・サイズの表示 を行う
+     * @return {Object} accessHistory アクセス履歴
+     */
+    function onLoadedFile() {
+        // --------------------------------------------------
+        // drag & drop でファイルの読み込み、ファイル一覧を表示
+        // --------------------------------------------------
+        $('#drop-area').on("dragover", function(e) {
+            // ブラウザの機能をキャンセル
+            e.preventDefault(); 
+        });
+
+        $('#drop-area').on("drop", function(_e){
+            let e = _e;
+            if( _e.originalEvent ){
+                e = _e.originalEvent;
+            }
+            // ブラウザの機能をキャンセル
+            e.preventDefault(); 
+            
+            // ファイルの取り出し
+            let files = e.dataTransfer.files;
+            
+
+            // D&Dされたファイルの情報を表示 及び 配列に格納
+            for (let i = 0; i < files.length; i++) {
+
+                let fileName = files[i].name;   // ファイル名
+                let filePath = files[i].path;   // ファイルのパス
+                let fileSize = files[i].size;   // ファイルのサイズ
+
+                // 分析対象かどうかを判定
+                if(isAnalysisTarget(fileName, targetVideoList)) {
+                    // ファイルサイズ加算
+                    totalFileSize += fileSize;
+
+                    // 「分析するファイル一覧」に表示
+                    $('#file-list ul').append('<li class="files margin-left">' + files[i].name + '</li>'); 
+
+                    targetVideoList.push(fileName); 
+                    targetPathList.push(filePath);  
+                    fileCount++;
+                }   
+            }
+            
+            // ファイル数を表示
+            $('#file-num').text(fileCount);
+
+            // ファイルサイズ表示
+            let organizedFileSize = Math.ceil(totalFileSize/(1024*1024) * Math.pow(10, 2)) / Math.pow(10, 2) // MB変換、小数点第3位切り上げ
+            $('#file-size').text(organizedFileSize + ' MB');
+
+            // ファイルサイズを判定  
+            // 上限を超えた場合、エラーメッセージの表示と現在のファイルサイズを赤字で表示
+            if(totalFileSize >= sizeMaxThreshold) {
+                // 赤字で表示
+                $('#file-size').css('color', 'red');
+                
+                // エラーメッセージを表示
+                alert('合計ファイルサイズが' + sizeMaxThreshold/(1024*1024) + 'MBを超えています。');
+            }
+            else {
+                // 分析開始フラグを立てる
+                shouldStarting = true;  
+            }
+        });
+    }
+
+    /**
+     * 入力されたファイルが分析対象かどうかを返す関数
+     * ファイル拡張子が"mp4" かつ 既に分析対象ではない場合に分析対象とする
+     * @param  {string} fileName        入力ファイル名
+     * @param  {Object} targetVideoList 分析対象ファイルの配列
+     * @return {Boolean}                分析対象かどうか
+     */
+    function isAnalysisTarget(fileName, targetVideoList) {
+        return fileName.split('.').pop() === 'mp4' && !targetVideoList.includes(fileName);
     }
 }

@@ -8,10 +8,10 @@ let { PythonShell } = require('python-shell');
 const mysql = require('mysql');
 const { type } = require('os');
 
-const topPageModule = require('../js/top-page-module');
-const newAnalysisModule = require('../js/new-analysis-module');
-const statisticsModule = require('../js/statistics-module');
-const fileOperationModule = require('../js/file-operation-module');   // ファイル操作モジュール 
+const topPageModule = require('../js/top-page-module');             // トップページの処理モジュール
+const newAnalysisModule = require('../js/new-analysis-module');     // 新規分析機能のモジュール
+const statisticsModule = require('../js/statistics-module');        // 統計機能のモジュール
+const fileOperationModule = require('../js/file-operation-module'); // ファイル操作モジュール 
 
 // MySQLとのコネクションの作成
 const mysql_setting = {
