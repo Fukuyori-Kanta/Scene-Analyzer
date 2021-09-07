@@ -622,7 +622,7 @@ def cut_segmentation(files, result_cut_path):
     # カット点のリストをCSVファイルに保存（後の処理で再使用するため）
     # --------------------------------------------------
     # TODO ハードコピーやめる
-    #write_csv([video_id_list, cut_point_list], r'C:\Users\hukuyori\CM_Analysis\Result\cut_point.csv')
+    write_csv([video_id_list, cut_point_list], r'C:\Users\fukuyori\Scene-Analyzer\resources\app\python\temp\cut_point.csv')
 
 
 #cut_segmentation([r'C:\Users\hukuyori\Desktop\PDⅢ\MovieFiles_201215\MovieFiles_201215\Movie\F201065696.mp4'], r'C:\Users\hukuyori\electron-videoAnalysis\python\result\cut')
