@@ -18,7 +18,7 @@ def cut_list_generate(result_cut_path, cut_videos_path, cut_list_path):
 
     # 動画IDリストの作成
     video_id_list = os.listdir(result_cut_path)   # 動画IDリスト
-    print(video_id_list)
+
     for video_id in video_id_list:
         videos_path = os.path.normpath(os.path.join(result_cut_path, video_id)) # カット動画フォルダのパス
         videos = natsorted(os.listdir(videos_path)) # カット動画リスト（自然順）
@@ -36,13 +36,3 @@ def cut_list_generate(result_cut_path, cut_videos_path, cut_list_path):
             shutil.copyfile(video_path, new_video_path)
             
     f.close()
-
-# パスの設定
-base = os.path.dirname(os.path.abspath(__file__))   # スクリプト実行ディレクトリ（[main.py] のディレクトリ）
-result_cut_path = os.path.normpath(os.path.join(base, 'temp\cut'))        # カットの保存先
-result_img_path = os.path.normpath(os.path.join(base, 'temp\cut_img'))    # カット画像の保存先
-result_noun_path = os.path.normpath(os.path.join(base, 'temp\\noun.csv')) # 物体認識のラベル格納先
-cut_list_path = os.path.normpath(os.path.join(base, 'temp\cut_list'))     # カットリスト（カット動画を１つにまとめたフォルダ）
-cut_videos_path = os.path.normpath(os.path.join(base, 'temp\cut_videos.txt'))   # カットビデオ（カット動画名１つにまとめたテキストファイル）
-
-cut_list_generate(result_cut_path, cut_videos_path, cut_list_path)
