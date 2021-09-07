@@ -7,6 +7,7 @@ from cut_img_generate_mod import cut_img_generate
 from object_recognition_mod import object_recognition
 from cut_list_generate_mod import cut_list_generate
 from label_shaping_mod import label_shaping
+from scene_integration_mod import scene_integration
 
 files = sys.argv[1]
 files = files.split(',')
@@ -44,7 +45,7 @@ label_shaping() ##### 後で引数指定
 # --------------------------------------------------
 # シーンの統合
 # --------------------------------------------------
-
+scene_integration(files) ##### 後で引数指定
 
 # --------------------------------------------------
 # ＣＭ好感度の分析
