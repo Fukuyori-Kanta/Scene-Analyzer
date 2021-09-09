@@ -201,8 +201,59 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
         // --------------------------------------------------
         // ラベルデータと好感度データをDBから読み込み、表示 TODO
         // --------------------------------------------------
-        //showLabelData(fileName, cutNo);
 
+
+        // --------------------------------------------------
+        // ラベルの表示
+        // --------------------------------------------------
+        let $labels = $('#labels');
+        $labels.empty();   // 前のラベルデータを削除
+
+        function csv_data(dataPath, cutNo) {
+            const request = new XMLHttpRequest(); // HTTPでファイルを読み込む
+            let resut_label
+            request.addEventListener('load', (event) => { // ロードさせ実行
+                const response = event.target.responseText; // 受け取ったテキストを返す
+                resut_label = csv_array(response, cutNo); //csv_arrayの関数を実行
+            });
+            request.open('GET', dataPath, true); // csvのパスを指定
+            request.send();
+        }
+
+        function csv_array(data, cutNo) {
+            const dataArray = []; //配列を用意
+            const dataString = data.split('\n'); //改行で分割
+            for (let i = 0; i < dataString.length; i++) { //あるだけループ
+                dataArray[i] = dataString[i].split(',');
+            }
+            //let label = results[i].label // ラベル名
+                
+            $labels.empty();   // 前のラベルデータを削除
+            let $labelItem = $('<div data-label-id="' + Number(cutNo) + '" class="label-item"></div>');
+            $labelItem.append('<h3 class="label">' + dataArray[cutNo].slice(4, dataArray[cutNo].length) + '</h3>');
+            $labels.append($labelItem);
+            return dataArray;
+
+        }
+
+        let result_label = csv_data('../python/temp/result_label.csv', cutNo);
+
+        //console.log(typeof(result_label))
+        //console.log(result_label[cutNo])
+        /*
+        // ラベルが1個もない時
+        if(results[0].labels_id == null) {
+            $labels.append('<div class="no-label">このシーンにはラベルは付与されていません。</div>');
+        } 
+        else {
+            for(let i = 0; i < results.length; i++) {     
+                let label = results[i].label // ラベル名
+                let $labelItem = $('<div data-label-id="' + Number(i+1) + '" class="label-item"></div>');
+                $labelItem.append('<h3 class="label">' + label + '</h3>');
+                $labels.append($labelItem);
+            }
+        }
+        */
         // --------------------------------------------------
         // 別のカットをクリックした時、データを切り替える
         // --------------------------------------------------
@@ -224,6 +275,8 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
 
                 // ラベルデータ、好感度データを置換
                 //showLabelData(fileName, cutNo);
+                let result_label = csv_data('../python/temp/result_label.csv', cutNo);
+
 
                 // 現在のシーンの枠に色付け
                 $('#modal-main img').css('border-color', '#000');  // 全ての枠を黒色に戻してから
