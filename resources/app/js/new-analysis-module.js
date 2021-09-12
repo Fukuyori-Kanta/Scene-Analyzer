@@ -117,9 +117,8 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
     // [次の動画へ]ボタンをクリック時、モーダルウィンドウを切替
     // --------------------------------------------------
     $('.next-button').on('click', function() {
-        const cutPath = path.join(__dirname, '../python/temp/cut');  // カット保存パス
-        console.log(cutPath);
-        const fileNames = fs.readdirSync(cutPath);  // カット保存フォルダのファイル名の配列
+        const scenePath = path.join(__dirname, '../python/temp/scene');  // シーン保存パス
+        const fileNames = fs.readdirSync(scenePath);  // シーン保存フォルダのファイル名の配列
         index++;
         if(index >= fileNames.length - 1) {
             index = fileNames.length - 1;
@@ -137,26 +136,25 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
     function showModal(index) {
         // 各種フォルダパス 
         const resultPath = path.join(__dirname, '../python/temp');  // resultフォルダのパス
-        const cutPath = path.join(resultPath, 'cut');               // カット動画フォルダのパス
-        const cutImgPath = path.join(resultPath, 'cut_img');        // カット画像フォルダのパス
+        const scenePath = path.join(resultPath, 'scene');           // シーン動画フォルダのパス
+        const thumbnailPath = path.join(resultPath, 'thumbnail');      // サムネ画像フォルダのパス
 
-        const fileNames = fs.readdirSync(cutPath);  // カット動画フォルダ内のファイル名の配列
+        const fileNames = fs.readdirSync(scenePath);  // シ－ン動画フォルダ内のファイル名の配列
         const fileName = fileNames[index];  // 現在、結果表示する動画名
 
-        let cutNo = 1;  // カット番号（初期値は１を設定）
+        let sceneNo = 1;  // シーン番号（初期値は１を設定）
 
-        // ファイル名とカット番号を表示
+        // ファイル名とシーン番号を表示
         $('#file-name').text(fileName);
-        $('#cut-no').text(cutNo + 'シーン目');
+        $('#scene-no').text(sceneNo + 'シーン目');
         
         // --------------------------------------------------
         // [temp]フォルダから動画データを読み込み、表示
         // --------------------------------------------------
-        let targetFolderPath = path.join(cutImgPath, fileName)    // 該当フォルダのパス
+        let targetFolderPath = path.join(thumbnailPath, fileName)    // 該当フォルダのパス
         
-        // 該当フォルダのカット画像一覧を取得
-        
-        let fileList = fileOperationModule.getFileList(targetFolderPath); // カット画像のファイル名一覧
+        // 該当フォルダのファイル名一覧を取得        
+        let fileList = fileOperationModule.getFileList(targetFolderPath); // ファイル名一覧
 
         // 動画の表示
         let $currentVideo = $('#movie-screen'); // 現在表示中の動画 
@@ -164,39 +162,38 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
         // <video>要素を作成・追加
         let $video = $('<video></video>');
         $video.attr({
-            //'src': path.join('..', cutPath, fileName, 'cut' + cutNo + '.mp4'),
-            'src': path.join(cutPath, fileName, 'cut' + cutNo + '.mp4'),
+            'src': path.join(scenePath, fileName, 'scene' + sceneNo + '.mp4'),
             'controls': true,
             'autoplay': true
         });  
         $currentVideo.append($video);
 
-        // カット数を表示
-        $('#cut-cnt').text(fileList.length);
+        // シーン数を表示
+        $('#scene-cnt').text(fileList.length);
 
-        // カット一覧表示
-        let $videoList = $('#modal-main #scene-list');  // カット一覧
+        // シーン一覧表示
+        let $videoList = $('#modal-main #scene-list');  // シーン一覧
         for(let i = 0, len = fileList.length; i < len; i++){
             // <li>要素を作成
             let $li = $('<li></li>');
             $li.attr('class', 'item');
 
             // <img>要素を作成
-            let $cutImg = $('<img>');
-            $cutImg.attr({
-                'data-cut-no': i+1,
-                'class': 'cut-img',
-                'src': path.join(cutImgPath, fileName, fileList[i])
+            let $thumbnail = $('<img>');
+            $thumbnail.attr({
+                'data-scene-no': i+1,
+                'class': 'thumbnail',
+                'src': path.join(thumbnailPath, fileName, fileList[i])
             });
 
             // ノードの組み立て
-            $li.append($cutImg);
+            $li.append($thumbnail);
             $videoList.append($li);
         }
 
         // 現在のシーンの枠に色付け
         $('#modal-main img').css('border-color', '#000');  // 全ての枠を黒色に戻してから
-        $('#modal-main img[data-cut-no=' + cutNo + ']').css('border-color', '#e00');
+        $('#modal-main img[data-scene-no=' + sceneNo + ']').css('border-color', '#e00');
 
         // --------------------------------------------------
         // ラベルデータと好感度データをDBから読み込み、表示 TODO
@@ -209,18 +206,18 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
         let $labels = $('#labels');
         $labels.empty();   // 前のラベルデータを削除
 
-        function csv_data(dataPath, cutNo) {
+        function csv_data(dataPath, sceneNo) {
             const request = new XMLHttpRequest(); // HTTPでファイルを読み込む
             let resut_label
             request.addEventListener('load', (event) => { // ロードさせ実行
                 const response = event.target.responseText; // 受け取ったテキストを返す
-                resut_label = csv_array(response, cutNo); //csv_arrayの関数を実行
+                resut_label = csv_array(response, sceneNo); //csv_arrayの関数を実行
             });
             request.open('GET', dataPath, true); // csvのパスを指定
             request.send();
         }
 
-        function csv_array(data, cutNo) {
+        function csv_array(data, sceneNo) {
             const dataArray = []; //配列を用意
             const dataString = data.split('\n'); //改行で分割
             for (let i = 0; i < dataString.length; i++) { //あるだけループ
@@ -229,17 +226,17 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
             //let label = results[i].label // ラベル名
                 
             $labels.empty();   // 前のラベルデータを削除
-            let $labelItem = $('<div data-label-id="' + Number(cutNo) + '" class="label-item"></div>');
-            $labelItem.append('<h3 class="label">' + dataArray[cutNo].slice(4, dataArray[cutNo].length) + '</h3>');
+            let $labelItem = $('<div data-label-id="' + Number(sceneNo) + '" class="label-item"></div>');
+            $labelItem.append('<h3 class="label">' + dataArray[sceneNo].slice(4, dataArray[sceneNo].length) + '</h3>');
             $labels.append($labelItem);
             return dataArray;
 
         }
 
-        let result_label = csv_data('../python/temp/result_label.csv', cutNo);
+        let result_label = csv_data('../python/temp/result_label.csv', sceneNo);
 
         //console.log(typeof(result_label))
-        //console.log(result_label[cutNo])
+        //console.log(result_label[sceneNo])
         /*
         // ラベルが1個もない時
         if(results[0].labels_id == null) {
@@ -255,32 +252,31 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
         }
         */
         // --------------------------------------------------
-        // 別のカットをクリックした時、データを切り替える
+        // 別のシーンをクリックした時、データを切り替える
         // --------------------------------------------------
         $('#modal-main #scene-list').on("click", function(e) {
-            cutNo = e.target.getAttribute('data-cut-No');   // カット番号(シーン番号)
+            sceneNo = e.target.getAttribute('data-scene-no');   // シーン番号
 
             // シーンの表示領域クリック時のみ切り替え
-            if(cutNo) {
-                // カット番号を表示
-                $('#cut-no').text(cutNo + 'シーン目');
+            if(sceneNo) {
+                // シーン番号を表示
+                $('#scene-no').text(sceneNo + 'シーン目');
                 
                 // 動画を置換
                 currentVideo = document.getElementById('movie-screen');
                 video = document.createElement('video');
-                video.src = '../python/temp/cut/' + fileName + '/' + 'cut' + cutNo + '.mp4';
+                video.src = '../python/temp/scene/' + fileName + '/' + 'scene' + sceneNo + '.mp4';
                 video.controls = true;
                 video.autoplay = true;
                 currentVideo.replaceChild(video, currentVideo.lastChild);
 
                 // ラベルデータ、好感度データを置換
-                //showLabelData(fileName, cutNo);
-                let result_label = csv_data('../python/temp/result_label.csv', cutNo);
-
+                //showLabelData(fileName, sceneNo);
+                let result_label = csv_data('../python/temp/result_label.csv', sceneNo);
 
                 // 現在のシーンの枠に色付け
                 $('#modal-main img').css('border-color', '#000');  // 全ての枠を黒色に戻してから
-                $('#modal-main img[data-cut-no=' + cutNo + ']').css('border-color', '#e00');
+                $('#modal-main img[data-scene-no=' + sceneNo + ']').css('border-color', '#e00');
             }
         });
     }
@@ -313,8 +309,8 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
      */
     const confirmCompleted = function() {
         return new Promise(function(resolve, reject){
-            const cutPath = path.join(__dirname, '../python/temp/cut');  // カット保存パス
-            const fileNames = fs.readdirSync(cutPath);  // カット保存フォルダのファイル名の配列
+            const scenePath = path.join(__dirname, '../python/temp/scene');  // シーン保存パス
+            const fileNames = fs.readdirSync(scenePath);  // シーン保存フォルダのファイル名の配列
             
             let targetNames = [];   // 実行対象のファイル名の配列
             targetPathList.forEach((targetPath) => {
@@ -396,7 +392,7 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
             }*/
             /*
             fileNames.forEach((fileName) => {
-                console.log(getFolderList(path.join(cutPath, fileName)));
+                console.log(getFolderList(path.join(scenePath, fileName)));
             });
 
             

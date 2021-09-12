@@ -61,23 +61,28 @@ def save_thumbnail_img(input_video_path, result_thumbnail_path, scene):
 
     cv2.destroyAllWindows()
 
+def thumbnail_img_generate():
+    base = os.path.dirname(os.path.abspath(__file__))   # スクリプト実行ディレクトリ
+    #scene_path = os.path.normpath(os.path.join(base, r'..\result\scene'))   # シーン動画の保存先
+    #thumbnail_path = os.path.normpath(os.path.join(base, r'..\result\thumbnail')) # サムネイルの保存先
 
-base = os.path.dirname(os.path.abspath(__file__))   # スクリプト実行ディレクトリ
-scene_path = os.path.normpath(os.path.join(base, r'..\result\scene'))   # シーン動画の保存先
-thumbnail_path = os.path.normpath(os.path.join(base, r'..\result\thumbnail')) # サムネイルの保存先
+    scene_path = os.path.normpath(os.path.join(base, r'temp\scene'))   # シーン動画の保存先   
+    thumbnail_path = os.path.normpath(os.path.join(base, r'temp\thumbnail')) # サムネイルの保存先
 
-dest_folder_create(thumbnail_path)
-video_id_list = os.listdir(scene_path)  # 動画IDリスト
+    video_id_list = os.listdir(scene_path)  # 動画IDリスト
 
-for video_id in video_id_list:
-    input_video_path = os.path.normpath(os.path.join(scene_path, video_id)) # 入力動画パス
-    result_thumbnail_path = os.path.normpath(os.path.join(thumbnail_path, video_id))    # サムネ結果保存パス
+    # フォルダ作成
+    dest_folder_create(thumbnail_path)
 
-    # サムネ画像の保存フォルダを作成
-    dest_folder_create(result_thumbnail_path)
+    for video_id in video_id_list:
+        input_video_path = os.path.normpath(os.path.join(scene_path, video_id)) # 入力動画パス
+        result_thumbnail_path = os.path.normpath(os.path.join(thumbnail_path, video_id))    # サムネ結果保存パス
 
-    scene_list = os.listdir(input_video_path)   # シーンリスト
+        # サムネ画像の保存フォルダを作成
+        dest_folder_create(result_thumbnail_path)
 
-    # サムネ画像を保存
-    for scene in scene_list:
-        save_thumbnail_img(input_video_path, result_thumbnail_path, scene)
+        scene_list = os.listdir(input_video_path)   # シーンリスト
+
+        # サムネ画像を保存
+        for scene in scene_list:
+            save_thumbnail_img(input_video_path, result_thumbnail_path, scene)
