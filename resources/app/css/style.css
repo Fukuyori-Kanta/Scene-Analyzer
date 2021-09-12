@@ -693,13 +693,13 @@ video {
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
 }
-.cut-img {
+#scene-list .thumbnail {
     max-width: 100%;	
     vertical-align: bottom;
     line-height: 1.0em;
     transform: opacity 0.3s linear;
 }
-.cut-img:hover {
+#scene-list .thumbnail:hover {
     opacity: 0.5;
 }
 #result-show .item {
