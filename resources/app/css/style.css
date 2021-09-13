@@ -677,7 +677,11 @@ video {
     box-shadow: 0 0 10px 0 rgba(163,163,163,0.50);
     margin-bottom: 20px;
 }
-
+.favo-gragh {
+    margin-left: 30px;
+    width:  calc(50% - 40px);
+    overflow: hidden;
+}
 /* （カット）シーン一覧画面 */
 .scene-list-screen {
     background-color: #ffffff;
