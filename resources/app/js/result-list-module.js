@@ -212,7 +212,7 @@
         let $cutImg = $('<img>');
         $cutImg.attr({
             'data-cut-no': i+1,
-            'class': 'cut-img',
+            'class': 'thumbnail',
             'src': path.join(cutImgPath, fileName, fileList[i])
         });
 
@@ -544,6 +544,8 @@ function showLabelData(fileName, sceneNo) {
         // 好感度の表示
         // --------------------------------------------------        
         $('#favo').text(results[0].favo_value);
+                
+        drawChart(sceneNo); // グラフ描画処理を呼び出す
 
     }, (error) => {
         console.log("error:", error.message);
@@ -699,3 +701,62 @@ function updateAccessHistory(fileName) {
     // DB接続終了
     connection.end();           
 }
+
+
+const lineChartData = {
+    //labels : ["シーン１","シーン２","シーン３","シーン４","シーン５","シーン６","シーン７","シーン８","シーン９", "シーン１０","シーン１１","シーン１２","シーン１３","シーン１４","シーン１５","シーン１６","シーン１７","シーン１８", "シーン１９","シーン２０","シーン２１","シーン２２","シーン２３","シーン２４","シーン２５","シーン２６","シーン２７"],
+    labels : ["シーン１","シーン２","シーン３","シーン４","シーン５","シーン６","シーン７","シーン８","シーン９"], 
+    datasets : [
+        {
+        label: "AA",
+        lineTension: 0,
+        data : [0.0062, 0.00683, 0.00648, 0.00665, 0.00614, 0.00556, 0.00465, 0.00409, 0.00302], 
+        //data: [0.05576, 0.0486, 0.0394, 0.02673, 0.01673, 0.0152, 0.01219, 0.01075, 0.05576, 0.0486, 0.0394, 0.02673, 0.01673, 0.0152, 0.01219, 0.01075, 0.05576, 0.0486, 0.0394, 0.02673, 0.01673, 0.0152, 0.01219, 0.01075],
+        borderColor: '#00a0dcff',
+        backgroundColor: '#00a0dc11',
+        pointRadius: [3]
+        }
+    ]
+}
+const lineChartOption = {
+    
+    scales: {
+        yAxes: [           // Ｙ軸 
+            {
+                ticks: {     // 目盛り        
+                    min: 0,      // 最小値
+                      // beginAtZero: true でも同じ
+                    //max: 0.06,     // 最大値
+                    stepSize: 0.01  // 間隔
+                }
+            }
+        ]
+    },
+    legend: {
+        display: false
+    }
+    //responsive: false  // canvasサイズ自動設定機能を使わない。HTMLで指定したサイズに固定
+}
+
+// グラフ描画処理
+function drawChart(current) { 
+    
+    for (var i = 0; i < lineChartData.datasets[0].data.length; i++) {
+        lineChartData.datasets[0].pointRadius[i] = 3
+    }
+    
+    lineChartData.datasets[0].pointRadius[current-1] = 10
+    var ctx = document.getElementById('canvas').getContext('2d');
+    window.myChart = new Chart(ctx, { // インスタンスをグローバル変数で生成
+        type: 'line',
+        data: lineChartData,
+        options: lineChartOption
+    }); 
+    console.log(lineChartData.datasets[0].pointRadius)
+}
+/*
+function display_point_current(current) {
+    return 0;
+}
+*/
+
