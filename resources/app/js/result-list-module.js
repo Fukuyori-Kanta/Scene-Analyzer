@@ -514,7 +514,7 @@ function showVideos(videos) {
  * @param  {str} fileName 該当パスの配列
  * @param  {int} sceneNo 該当パスの配列
  */
-function showLabelData(fileName, sceneNo) {   
+async function showLabelData(fileName, sceneNo) {   
     // 問い合わせするSQL文
     let query = "SELECT * " +
                 "FROM scene_data LEFT JOIN labels_data ON scene_data.labels_id=labels_data.labels_id " +
@@ -544,8 +544,11 @@ function showLabelData(fileName, sceneNo) {
         // 好感度の表示
         // --------------------------------------------------        
         $('#favo').text(results[0].favo_value);
-                
-        drawChart(sceneNo); // グラフ描画処理を呼び出す
+
+        //const favoValues = getFavoValues(fileName);
+
+        //console.log(favoValues);
+        drawChart(fileName, sceneNo); // グラフ描画処理を呼び出す
 
     }, (error) => {
         console.log("error:", error.message);
@@ -702,45 +705,50 @@ function updateAccessHistory(fileName) {
     connection.end();           
 }
 
+// グラフ描画処理
+async function drawChart(fileName, current) { 
 
-const lineChartData = {
-    //labels : ["シーン１","シーン２","シーン３","シーン４","シーン５","シーン６","シーン７","シーン８","シーン９", "シーン１０","シーン１１","シーン１２","シーン１３","シーン１４","シーン１５","シーン１６","シーン１７","シーン１８", "シーン１９","シーン２０","シーン２１","シーン２２","シーン２３","シーン２４","シーン２５","シーン２６","シーン２７"],
-    labels : ["シーン１","シーン２","シーン３","シーン４","シーン５","シーン６","シーン７","シーン８","シーン９"], 
-    datasets : [
-        {
-        label: "AA",
-        lineTension: 0,
-        data : [0.0062, 0.00683, 0.00648, 0.00665, 0.00614, 0.00556, 0.00465, 0.00409, 0.00302], 
-        //data: [0.05576, 0.0486, 0.0394, 0.02673, 0.01673, 0.0152, 0.01219, 0.01075, 0.05576, 0.0486, 0.0394, 0.02673, 0.01673, 0.0152, 0.01219, 0.01075, 0.05576, 0.0486, 0.0394, 0.02673, 0.01673, 0.0152, 0.01219, 0.01075],
-        borderColor: '#00a0dcff',
-        backgroundColor: '#00a0dc11',
-        pointRadius: [3]
-        }
-    ]
-}
-const lineChartOption = {
-    
-    scales: {
-        yAxes: [           // Ｙ軸 
+    // 好感度データの取得
+    //const fileName = 'A211079558';
+    const favoValues = await getFavoValues(fileName);
+    const favoData = [...favoValues].map((d) => {return d.favo_value});
+
+    // x軸ラベル（シーン〇  〇は全角数字）
+    const xAxisLabels = [...Array(favoValues.length).keys()].map((d) => {return "シーン" + zenkaku2Hankaku(String(d+1))});
+
+    const lineChartData = {
+        labels : xAxisLabels, 
+        datasets : [
             {
-                ticks: {     // 目盛り        
-                    min: 0,      // 最小値
-                      // beginAtZero: true でも同じ
-                    //max: 0.06,     // 最大値
-                    stepSize: 0.01  // 間隔
-                }
+            label: "AA",
+            lineTension: 0,
+            data : favoData, 
+            borderColor: '#00a0dcff',
+            backgroundColor: '#00a0dc11',
+            pointRadius: [3]
             }
         ]
-    },
-    legend: {
-        display: false
     }
-    //responsive: false  // canvasサイズ自動設定機能を使わない。HTMLで指定したサイズに固定
-}
+    const lineChartOption = {
+        scales: {
+            yAxes: [           // Ｙ軸 
+                {
+                    ticks: {     // 目盛り        
+                        min: 0,      // 最小値
+                        // beginAtZero: true でも同じ
+                        //max: 0.06,     // 最大値
+                        stepSize: 0.01  // 間隔
+                    }
+                }
+            ]
+        },
+        legend: {
+            display: false
+        }
+        //responsive: false  // canvasサイズ自動設定機能を使わない。HTMLで指定したサイズに固定
+    }
 
-// グラフ描画処理
-function drawChart(current) { 
-    
+    // データ
     for (var i = 0; i < lineChartData.datasets[0].data.length; i++) {
         lineChartData.datasets[0].pointRadius[i] = 3
     }
@@ -760,3 +768,32 @@ function display_point_current(current) {
 }
 */
 
+/**
+ * 該当動画の好感度データを取得する関数
+ * @return {Object} favoValues 好感度データ
+ */
+ async function getFavoValues(fileName) {
+    // 問い合わせするSQL文
+    let query = "SELECT favo_value " +
+                "FROM scene_data " +
+                "WHERE video_id='" + fileName + "';";
+
+    // 接続・問い合わせ
+    let favoValues = await mydb.query(query);  // 好感度データ
+    
+    // 接続終了
+    //mydb.close();
+    
+    return favoValues
+}
+
+
+/**
+ * 半角英数字を全角英数字に変換する関数
+ * @return {String}} 全角英数字に変換した文字列
+ */
+function zenkaku2Hankaku(str) {
+    return str.replace(/[A-Za-z0-9]/g, function(s) {
+        return String.fromCharCode(s.charCodeAt(0) + 0xFEE0);
+    });
+}
