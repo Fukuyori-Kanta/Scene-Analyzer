@@ -131,7 +131,7 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
     /**
      * モーダルウィンドウを表示する（初回のみ）
      * モーダルウィンドウ内に結果詳細画面のレイアウトで分析結果を表示する
-     * @param  {str} index 結果表示する動画のインデックス
+     * @param  {string} index 結果表示する動画のインデックス
      */
     function showModal(index) {
         // 各種フォルダパス 
@@ -284,7 +284,7 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
     /**
      * 該当パスの配列に対してカット分割～ＣＭ好感度の付与をする関数
      * 実際の実行行うのは、pythonのコード
-     * @param  {str} targetPathList 該当パスの配列
+     * @param  {string} targetPathList 該当パスの配列
      */
     const runAnalysis = function(targetPathList) {
         return new Promise(function(resolve, reject) {
@@ -463,6 +463,7 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
                 
                 // エラーメッセージを表示
                 alert('合計ファイルサイズが' + sizeMaxThreshold/(1024*1024) + 'MBを超えています。');
+                shouldStarting = true;  
             }
             else {
                 // 分析開始フラグを立てる
