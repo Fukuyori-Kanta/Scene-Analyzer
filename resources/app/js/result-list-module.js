@@ -13,12 +13,12 @@
     // ページ更新時にタグの状態を保持
     let searchOption = localStorage.getItem('search-option');
 
-    if(x=document.querySelector('[name=search-option][value='+searchOption+']')) {
-        x.checked=true;
+    if(x = document.querySelector('[name=search-option][value=' + searchOption + ']')) {
+        x.checked = true;
     } 
-    [].forEach.call(document.querySelectorAll('[name=search-option]'),function(x){
-        x.addEventListener('change',function(e){
-            localStorage.setItem('search-option',e.target.value);
+    [].forEach.call(document.querySelectorAll('[name=search-option]'), function(x){
+        x.addEventListener('change', function(e){
+            localStorage.setItem('search-option', e.target.value);
         });
     });
     if(searchOption == 'video-name') {
@@ -202,6 +202,7 @@
     showLabelData(fileName, cutNo);
 
     // 好感度データを表示
+    window.myChart = 0; // 描画時に使用するグローバル変数
     showFavoData(fileName, cutNo);
 
     // --------------------------------------------------
@@ -373,31 +374,10 @@
     // 別のカットをクリックした時、データを切り替える
     // --------------------------------------------------
     $('#scene-list').on("click", async function(e) {
-        cutNo = e.target.getAttribute('data-cut-No');   // カット番号(シーン番号)
+        let cutNo = e.target.getAttribute('data-cut-No');   // カット番号(シーン番号)
 
-        // シーンの表示領域クリック時のみ切り替え
-        if(cutNo) {
-            // カット番号を表示
-            $('#cut-no').text(cutNo + 'シーン目');
-            
-            // 動画を置換
-            currentVideo = document.getElementById('movie-screen');
-            video = document.createElement('video');
-            video.src = '../result/scene/' + fileName + '/' + 'scene' + cutNo + '.mp4';
-            video.controls = true;
-            video.autoplay = true;
-            currentVideo.replaceChild(video, currentVideo.lastChild);
-
-            // ラベルデータを表示            
-            showLabelData(fileName, cutNo);
-
-            // 好感度データを表示
-            showFavoData(fileName, cutNo);
-
-            // 現在のシーンの枠に色付け
-            $('#result-show img').css('border-color', '#000');  // 全ての枠を黒色に戻してから
-            $('#result-show img[data-cut-no=' + cutNo + ']').css('border-color', '#e00');
-        }
+        // 切り替えたシーンの結果を表示する
+        showResultContents(fileName, cutNo);
     });  
 
     // --------------------------------------------------
@@ -732,7 +712,38 @@ function showContens(videos) {
     // --------------------------------------------------
     // 好感度グラフを表示
     // --------------------------------------------------  
-    drawChart(favoValues, sceneNo);
+    drawChart(favoValues, sceneNo, fileName);
+}
+
+/**
+ * 該当シーンの分析結果（分割したシーンの動画、ラベルデータ、好感度データ）を表示する関数
+ * @param  {string} fileName 動画ID
+ * @param  {int}    sceneNo  シーン番号
+ */
+function showResultContents(fileName, cutNo) {
+    // シーンの表示領域クリック時のみ切り替え
+    if(cutNo) {
+        // カット番号を表示
+        $('#cut-no').text(cutNo + 'シーン目');
+        
+        // 動画を置換
+        currentVideo = document.getElementById('movie-screen');
+        video = document.createElement('video');
+        video.src = '../result/scene/' + fileName + '/' + 'scene' + cutNo + '.mp4';
+        video.controls = true;
+        video.autoplay = true;
+        currentVideo.replaceChild(video, currentVideo.lastChild);
+
+        // ラベルデータを表示            
+        showLabelData(fileName, cutNo);
+
+        // 好感度データを表示
+        showFavoData(fileName, cutNo);
+
+        // 現在のシーンの枠に色付け
+        $('#result-show img').css('border-color', '#000');  // 全ての枠を黒色に戻してから
+        $('#result-show img[data-cut-no=' + cutNo + ']').css('border-color', '#e00');
+    }
 }
 
 /**
@@ -740,7 +751,7 @@ function showContens(videos) {
  * @param  {Object} favoData 好感度データ
  * @param  {int}    current  現在のシーン番号
  */
- async function drawChart(favoData, current) { 
+ async function drawChart(favoData, current, fileName) { 
     // x軸ラベル（シーン〇  〇は全角数字）
     const xAxisLabels = [...Array(favoData.length).keys()].map((d) => {return "シーン" + zenkaku2Hankaku(String(d+1));});
 
@@ -749,7 +760,7 @@ function showContens(videos) {
         labels : xAxisLabels, 
         datasets : [
             {
-            label: "AA",
+            label: "好感度",
             lineTension: 0,
             data : favoData, 
             borderColor: '#00a0dcff',
@@ -777,8 +788,15 @@ function showContens(videos) {
             display: false
         },
         // アニメーション
-        animation: false
-        //responsive: false  // canvasサイズ自動設定機能を使わない。HTMLで指定したサイズに固定
+        animation: false, 
+        // マウスオーバー時のカーソル変更関数
+        onHover : function(e, el) {
+            if (! el || el.length === 0) {
+                $('#canvas').css('cursor', 'default');
+            } else {
+                $('#canvas').css('cursor', 'pointer');
+            }
+        },
     }
 
     // ポイントの大きさを設定（現在シーンには、大きくポイントを描画）
@@ -787,13 +805,34 @@ function showContens(videos) {
     }
     lineChartData.datasets[0].pointRadius[current-1] = 10
 
+    let myCanvas = $('#canvas')[0];
+    let ctx = myCanvas.getContext('2d');
+    // 既に描画している場合は、一度クリア
+    // クリアしないと描画ずれが起きる
+    if(myChart) {
+        myChart.destroy();
+    }
     // 折れ線グラフを描画
-    let ctx = document.getElementById('canvas').getContext('2d');
-    window.myChart = new Chart(ctx, { // インスタンスをグローバル変数で生成
+    myChart = new Chart(ctx, {
         type: 'line',
         data: lineChartData,
         options: lineChartOption
     }); 
+
+    /* クリック処理（必要かどうかは検討） 参考 : https://qiita.com/sato_ryu/items/b83eac5c2e1efe29507d    */
+    // ポインタをクリックした場合、該当シーンに遷移する
+    $('#canvas').on('click', function(e) {
+        let item = myChart.getElementAtEvent(e);
+    
+        if (item.length == 0) {
+            return;
+        }
+        
+        let cutNo = item[0]._index + 1  // シーン番号
+                
+        // 切り替えたシーンの結果を表示する
+        showResultContents(fileName, cutNo);
+    });
 }
 
 /**
