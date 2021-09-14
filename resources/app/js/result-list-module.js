@@ -6,15 +6,13 @@
     // --------------------------------------------------
     // 検索オプションが指定されてこのページに遷移した場合
     // --------------------------------------------------
-    const query = location.search;
+    const query = location.search;  // URLパラメータ（クエリ）
     const value = query.split('=');
-    console.log(value);
-    const searchWord = decodeURIComponent(value[1]);  // ファイル名
-    console.log(searchWord);
+    const searchWord = decodeURIComponent(value[1]);  // 検索ワード
     
     // ページ更新時にタグの状態を保持
     let searchOption = localStorage.getItem('search-option');
-    console.log(searchOption);
+
     if(x=document.querySelector('[name=search-option][value='+searchOption+']')) {
         x.checked=true;
     } 
@@ -37,22 +35,15 @@
         // プレスホルダーに検索単語を表示
         $('#search-word').val(searchWord);
         
-        // SQLに一覧データを問い合わせて表示
-        search_sql(searchWord, searchOption);
+        // 検索に引っかかったＣＭのサムネ画像と作品名を表示
+        showSearchedVideo(searchWord, searchOption);
     }
     // --------------------------------------------------
     // 検索オプションが指定されずにこのページに遷移した場合
     // --------------------------------------------------
     else {
-        // 結果を動画名ごとにまとめて取得
-        
-        let videos = fileOperationModule.getAllVideoID();   // 全動画名を取得
-
-        // 件数を表示
-        $('#scene-count').text(videos.length);
-
-        // SQLの結果の動画一覧を表示
-        showVideos(videos);
+        // 全ＣＭのサムネ画像と作品名を表示
+        showAllVideo();
     }
 
     // --------------------------------------------------
@@ -66,7 +57,6 @@
             location.href = 'result_show.html?name=' +  encodeURIComponent(videoName);
         }
     });
-
     // --------------------------------------------------
     // 検索オプション（ラジオボタン）が変更された時の処理
     // --------------------------------------------------
@@ -79,13 +69,11 @@
             $('#search-word').attr('placeholder', 'ラベル名を検索（３つまで）');
         }
    });
-   
     // --------------------------------------------------
     // 検索ボタンが押された時の処理
     // --------------------------------------------------
     $('#search-button').click(function(e) {
         let $searchWord = $('#search-word').val();
-        let $searchOption = $('input[name="search-option"]:radio').val();
        
         // 検索単語が入力されている時のみ、
         // 同ページ([result_list.html])に検索単語を送信
@@ -94,7 +82,7 @@
         }
     });
     // --------------------------------------------------
-    // テキストボックスでEnterが押された時の処理（Enter無効化）
+    // テキストボックスでEnterが押された時の処理
     // --------------------------------------------------  
     $('#search-word').keypress(function(e) {
         let key = e.which;
@@ -144,38 +132,20 @@
     // アクセス履歴を更新
     // --------------------------------------------------
     updateAccessHistory(fileName);
-
-    // 作品名とカット番号を表示
-    let cutNo = 1;  // カット番号（初期値は１を設定）
-
-    // MySQLとのコネクションの作成
-    const connection = mysql.createConnection(mysql_setting);
-
-    // DB接続
-    connection.connect();
-
-    let qry = "SELECT product_name " +
-                "FROM works_data " +
-                "WHERE video_id='" + fileName + "';";
     
     // --------------------------------------------------
-    // SQL文の実行
+    // 作品名とカット番号を表示
     // --------------------------------------------------
-    connection.query(qry, function (err, rows) {
-        // エラー処理
-        if (err) { 
-            console.log('err: ' + err); 
-        }
+    const productName = await getProductName(fileName); // 作品名
+    let cutNo = 1;  // カット番号（初期値は１を設定）
 
-        // パンくずリストにファイル名を表示
-        $('.bread ul').append('<li>' + rows[0].product_name + "</li>").trigger('create');
-        $('#file-name').text(rows[0].product_name);
-    });
+    // パンくずリストに作品名を表示
+    $('.bread ul').append('<li>' + productName + "</li>").trigger('create');
 
-    // DB接続終了
-    connection.end();     
+    // タイトルに作品名を表示
+    $('#file-name').text(productName);
 
-    // カット番号の表示
+    // カット番号を表示
     $('#cut-no').text(cutNo + 'シーン目');
     
     // --------------------------------------------------
@@ -186,7 +156,7 @@
     // 該当フォルダのカット画像一覧を取得
     let fileList = fileOperationModule.getFileList(targetFolderPath); // カット画像のファイル名一覧
 
-    // 動画の表示
+    // 動画を表示
     let $currentVideo = $('#movie-screen'); // 現在表示中の動画 
 
     // <video>要素を作成・追加
@@ -226,11 +196,17 @@
     $('#result-show img[data-cut-no=' + cutNo + ']').css('border-color', '#e00');
 
     // --------------------------------------------------
-    // ラベルデータと好感度データをDBから読み込み、表示
+    // ラベルデータと好感度データをDBから取得、表示
     // --------------------------------------------------
+    // ラベルデータを表示
     showLabelData(fileName, cutNo);
 
+    // 好感度データを表示
+    showFavoData(fileName, cutNo);
+
+    // --------------------------------------------------
     // アノテーション機能
+    // --------------------------------------------------
     let isfirstClick = true;   // [結果を表示]ボタンを初回クリック時だけtrue
     let temp = [];  // 削除するラベル群
 
@@ -396,7 +372,7 @@
     // --------------------------------------------------
     // 別のカットをクリックした時、データを切り替える
     // --------------------------------------------------
-    $('#scene-list').on("click", function(e) {
+    $('#scene-list').on("click", async function(e) {
         cutNo = e.target.getAttribute('data-cut-No');   // カット番号(シーン番号)
 
         // シーンの表示領域クリック時のみ切り替え
@@ -412,8 +388,11 @@
             video.autoplay = true;
             currentVideo.replaceChild(video, currentVideo.lastChild);
 
-            // ラベルデータ、好感度データを置換
+            // ラベルデータを表示            
             showLabelData(fileName, cutNo);
+
+            // 好感度データを表示
+            showFavoData(fileName, cutNo);
 
             // 現在のシーンの枠に色付け
             $('#result-show img').css('border-color', '#000');  // 全ての枠を黒色に戻してから
@@ -466,107 +445,33 @@
 }
 
 /**
- * 動画名の配列を受け取り、それらの動画を表示する
- * @param  {Array} videos 表示する動画名の配列
+ * 全ＣＭの動画データ（動画IDと作品名）を取得する関数
+ * @return {Object} allVideoData 全ＣＭの動画データ
  */
-function showVideos(videos) {
+ async function getAllVideoData() {
     // 問い合わせするSQL文
     let query = "SELECT video_id, product_name " +
                 "FROM works_data " +
                 "ORDER BY video_id";
-    
+
     // 接続・問い合わせ
-    mydb.query(query).then((results) => { 
-        // --------------------------------------------------
-        // サムネイルと作品名の表示
-        // --------------------------------------------------
-        for(let data of results) {
-            let videoName = data.video_id;  // 動画ID
-            let product_name = data.product_name;   // 作品名
-
-            // サムネ画像のパスを取得
-            let thumbnailPath = fileOperationModule.getThumbnailPath(videoName);  // サムネ画像のパス
-                
-            // 表示コンテンツ（サムネイルと作品名）の作成・追加
-            // <div>要素を作成
-            let $div = $('<div class="item"></div>');
-
-            // <img>要素を追加
-            let $img = $('<img data-video-name=' + videoName + ' class="thumbnail" src=' + thumbnailPath + ' alt="">');
-            $($div).append($img);
-
-            // <p>要素を追加
-            let $p = $('<p class="video-name" data-video-name=' + videoName + '>' + product_name + '</p>');
-            $($div).append($p);
-
-            $('#video-list').append($div);
-        }
-    }, (error) => {
-        console.log("error:", error.message);
-    });
-
+    let allVideoData = await mydb.query(query);  // 全ＣＭの動画IDと作品名
+    
     // 接続終了
     mydb.close();
+
+    return allVideoData;
 }
 
 /**
- * 該当ファイルのラベルデータと好感度データを表示する関数
- * @param  {str} fileName 該当パスの配列
- * @param  {int} sceneNo 該当パスの配列
+ * 検索に引っかかったＣＭの動画データ（動画IDと作品名）を取得する関数
+ * @param  {string} searchWord   検索ワード
+ * @param  {string} searchOption 検索オプション
+ * @return {Object} searchedVideoData 検索に引っかかったＣＭの動画データ
  */
-async function showLabelData(fileName, sceneNo) {   
-    // 問い合わせするSQL文
-    let query = "SELECT * " +
-                "FROM scene_data LEFT JOIN labels_data ON scene_data.labels_id=labels_data.labels_id " +
-                "WHERE video_id='" + fileName + "' AND scene_no='scene_" + sceneNo + "';";
-    
-    // 接続・問い合わせ
-    mydb.query(query).then((results) => { 
-        // --------------------------------------------------
-        // ラベルの表示
-        // --------------------------------------------------
-        let $labels = $('#labels');
-        $labels.empty();   // 前のラベルデータを削除
-
-        // ラベルが1個もない時
-        if(results[0].labels_id == null) {
-            $labels.append('<div class="no-label">このシーンにはラベルは付与されていません。</div>');
-        } 
-        else {
-            for(let i = 0; i < results.length; i++) {     
-                let label = results[i].label // ラベル名
-                let $labelItem = $('<div data-label-id="' + Number(i+1) + '" class="label-item"></div>');
-                $labelItem.append('<h3 class="label">' + label + '</h3>');
-                $labels.append($labelItem);
-            }
-        }
-        // --------------------------------------------------
-        // 好感度の表示
-        // --------------------------------------------------        
-        $('#favo').text(results[0].favo_value);
-
-        //const favoValues = getFavoValues(fileName);
-
-        //console.log(favoValues);
-        drawChart(fileName, sceneNo); // グラフ描画処理を呼び出す
-
-    }, (error) => {
-        console.log("error:", error.message);
-    });
-    
-    // 接続終了
-    // ここでは、終了するとエラーになる（要調査）
-    // mydb.close();   
-}
-
-/**
- * 検索関数　TODO: 
- * @param  {str} searchWord 検索ワード
- */
-function search_sql(searchWord, searchOption) {
-    const words = searchWord.split('　');   // 検索ワード
+ async function getSearchedVideoData(searchWord, searchOption) {
+    const words = searchWord.replaceAll("　", " ").split(' ');   // 検索ワード
     let query = "";     // 実行するクエリ
-    let videos = [];    // 表示する動画名の配列
 
     // 検索オプションの判定
     // "動画名"の場合
@@ -631,55 +536,270 @@ function search_sql(searchWord, searchOption) {
                 break;
         }
     }
-    
+
     // 接続・問い合わせ
-    mydb.query(query).then((results) => { 
-        for(let data of results) {
-            videos.push(data.video_id);
-        }
-        // 件数を表示
-        $('#scene-count').text(videos.length);
+    let searchedVideoData = await mydb.query(query);  // 全ＣＭの動画IDと作品名
 
-        // --------------------------------------------------
-        // SQLの結果の動画一覧を表示
-        // --------------------------------------------------
-        //showVideos(videos);
-
-        // --------------------------------------------------
-        // サムネイルと作品名の表示
-        // --------------------------------------------------
-        for(let data of results) {
-            let videoName = data.video_id;  // 動画ID
-
-            // サムネ画像のパスを取得
-            let thumbnailPath = fileOperationModule.getThumbnailPath(videoName);  // サムネ画像のパス
-
-            // 表示コンテンツ（サムネイルと作品名）の作成・追加
-            // <div>要素を作成
-            let $div = $('<div class="item"></div>');
-
-            // <img>要素を追加
-            let $img = $('<img data-video-name=' + videoName + ' class="thumbnail" src=' + thumbnailPath + ' alt="">');
-            $($div).append($img);
-
-            // <p>要素を追加
-            let $p = $('<p class="video-name" data-video-name=' + videoName + '>' + data.product_name + '</p>');
-            $($div).append($p);
-
-            $('#video-list').append($div);
-        }
-
-    }, (error) => {
-        console.log("error:", error.message);
-    });
-    
     // 接続終了
-    mydb.close();   
+    mydb.close();
+
+    return searchedVideoData;
 }
 
 /**
- * 該当動画のアクセス時間を更新する
- * @param  {str} fileName 検索ワード
+ * 該当シーンのラベルデータを取得する関数
+ * @param  {string} fileName  動画ID 
+ * @param  {int}    sceneNo   シーン番号
+ * @return {Object} labelData ラベルデータ（labels_id, label）
+ */
+ async function getLabelData(fileName, sceneNo) {
+    // 問い合わせするSQL文
+    let query = "SELECT labels_data.labels_id, labels_data.label " +
+                "FROM scene_data LEFT JOIN labels_data ON scene_data.labels_id=labels_data.labels_id " +
+                "WHERE video_id='" + fileName + "' AND scene_no='scene_" + sceneNo + "';";
+
+    // 接続・問い合わせ
+    let labelData = await mydb.query(query);  // 全ＣＭの動画IDと作品名
+
+    // 接続終了
+    //mydb.close(); // 同じページで何度も利用するため
+
+    return labelData;
+}
+
+/**
+ * 該当動画の好感度データを取得する関数
+ * @return {Object} favoValues 好感度データ
+ */
+ async function getFavoValues(fileName) {
+    // 問い合わせするSQL文
+    let query = "SELECT favo_value " +
+                "FROM scene_data " +
+                "WHERE video_id='" + fileName + "';";
+
+    // 接続・問い合わせ
+    let favoValues = await mydb.query(query);  // 好感度データ
+    
+    // 接続終了
+    //mydb.close();
+    
+    return [...favoValues].map((d) => {return d.favo_value;});
+}
+
+/**
+ * 動画IDから作品名を取得する関数
+ * @param  {string} videoId  動画ID
+ * @return {Object}          作品名   
+ */
+ async function getProductName(videoId) {
+    // 問い合わせするSQL文
+    let query = "SELECT product_name " +
+                "FROM works_data " +
+                "WHERE video_id='" + videoId + "';";
+
+    // 接続・問い合わせ
+    let productName = await mydb.query(query);  // 全ＣＭの動画IDと作品名
+
+    // 接続終了
+    //mydb.close();
+
+    return productName[0].product_name;
+}
+
+/**
+ * 全ＣＭのサムネ画像と作品名を表示する関数
+ */
+async function showAllVideo() {
+    // --------------------------------------------------
+    // 全ＣＭの動画データ（動画IDと作品名）を取得
+    // --------------------------------------------------
+    const allVideoData = await getAllVideoData();   // 全ＣＭの動画データ
+
+    // --------------------------------------------------
+    // 取得した動画がフォルダに存在するかチェック
+    // --------------------------------------------------
+
+
+    // --------------------------------------------------
+    // 全ＣＭ分のサムネ画像と作品名を表示
+    // --------------------------------------------------
+    showContens(allVideoData);    
+}
+
+/**
+ * 検索に引っかかったＣＭのサムネ画像と作品名を表示する関数
+ * @param  {string} searchWord   検索ワード
+ * @param  {string} searchOption 検索オプション
+ */
+async function showSearchedVideo(searchWord, searchOption) {
+    // --------------------------------------------------
+    // 検索に引っかかったＣＭの動画データ（動画IDと作品名）を取得
+    // --------------------------------------------------
+    const searchedVideoData = await getSearchedVideoData(searchWord, searchOption); // 検索したＣＭの動画データ
+    
+    // --------------------------------------------------
+    // 取得した動画がフォルダに存在するかチェック
+    // --------------------------------------------------
+    
+    
+    // --------------------------------------------------
+    // 検索に引っかかったＣＭのサムネ画像と作品名を表示
+    // --------------------------------------------------
+    showContens(searchedVideoData);
+}
+
+/**
+ * 与えられた動画データのサムネ画像と作品名を表示する関数
+ * @param  {Object} videos 動画データ
+ */
+function showContens(videos) {
+    // 件数を表示
+    $('#scene-count').text(videos.length);
+
+    // 与えられたCＭ分のデータを表示
+    for(let data of videos) {
+        let videoName = data.video_id;       // 動画ID
+        let productName = data.product_name; // 作品名
+
+        // サムネ画像のパスを取得
+        let thumbnailPath = fileOperationModule.getThumbnailPath(videoName);  // サムネ画像のパス
+            
+        // 表示コンテンツ（サムネ画像と作品名）の作成・追加
+        // <div>要素を作成
+        let $div = $('<div class="item"></div>');
+
+        // <img>要素を追加
+        let $img = $('<img data-video-name=' + videoName + ' class="thumbnail" src=' + thumbnailPath + ' alt="">');
+        $($div).append($img);
+
+        // <p>要素を追加
+        let $p = $('<p class="video-name" data-video-name=' + videoName + '>' + productName + '</p>');
+        $($div).append($p);
+
+        $('#video-list').append($div);
+    } 
+}
+
+/**
+ * 該当シーンのラベルデータを表示する関数
+ * @param  {string} fileName 動画ID
+ * @param  {int}    sceneNo  シーン番号
+ */
+ async function showLabelData(fileName, sceneNo) {   
+    // --------------------------------------------------
+    // ラベルデータを取得
+    // --------------------------------------------------
+    const labelData = await getLabelData(fileName, sceneNo);  // ラベルデータ
+    
+    // --------------------------------------------------
+    // ラベルを表示
+    // --------------------------------------------------
+    let $labels = $('#labels');
+    $labels.empty();   // 前のラベルデータを削除
+    
+    // ラベルが1個もない時
+    if(labelData[0].labels_id == null) {
+        // ラベルが1つもない文言を表示
+        $labels.append('<div class="no-label">このシーンにはラベルは付与されていません。</div>');
+    } 
+    else {
+        // 付与されたラベル数だけラベルを表示
+        for(let i = 0; i < labelData.length; i++) {     
+            let label = labelData[i].label // ラベル名
+            let $labelItem = $('<div data-label-id="' + Number(i+1) + '" class="label-item"></div>');
+            $labelItem.append('<h3 class="label">' + label + '</h3>');
+            $labels.append($labelItem);
+        }
+    }    
+}
+
+/**
+ * 該当シーンの好感度データを表示する関数
+ * @param  {string} fileName 動画ID
+ * @param  {int}    sceneNo  シーン番号
+ */
+ async function showFavoData(fileName, sceneNo) {   
+    // --------------------------------------------------
+    // 好感度データを取得
+    // --------------------------------------------------
+    const favoValues = await getFavoValues(fileName);
+
+    // --------------------------------------------------
+    // 好感度を表示
+    // --------------------------------------------------        
+    //$('#favo').text(favoValues[sceneNo-1]);  
+
+    // --------------------------------------------------
+    // 好感度グラフを表示
+    // --------------------------------------------------  
+    drawChart(favoValues, sceneNo);
+}
+
+/**
+ * 折れ線グラフを描画する関数
+ * @param  {Object} favoData 好感度データ
+ * @param  {int}    current  現在のシーン番号
+ */
+ async function drawChart(favoData, current) { 
+    // x軸ラベル（シーン〇  〇は全角数字）
+    const xAxisLabels = [...Array(favoData.length).keys()].map((d) => {return "シーン" + zenkaku2Hankaku(String(d+1));});
+
+    // 描画するグラフのデータ
+    const lineChartData = {
+        labels : xAxisLabels, 
+        datasets : [
+            {
+            label: "AA",
+            lineTension: 0,
+            data : favoData, 
+            borderColor: '#00a0dcff',
+            backgroundColor: '#00a0dc11',
+            pointRadius: [3]
+            }
+        ]
+    }
+    // グラフのオプション
+    const lineChartOption = {
+        // 大きさ
+        scales: {
+            yAxes: [                    // Ｙ軸 
+                {
+                    ticks: {            // 目盛り        
+                        min: 0,         // 最小値
+                        //max: 0.06,    // 最大値
+                        stepSize: 0.01  // 間隔
+                    }
+                }
+            ]
+        },
+        // 凡例
+        legend: {
+            display: false
+        },
+        // アニメーション
+        animation: false
+        //responsive: false  // canvasサイズ自動設定機能を使わない。HTMLで指定したサイズに固定
+    }
+
+    // ポイントの大きさを設定（現在シーンには、大きくポイントを描画）
+    for (let i = 0; i < lineChartData.datasets[0].data.length; i++) {
+        lineChartData.datasets[0].pointRadius[i] = 3
+    }
+    lineChartData.datasets[0].pointRadius[current-1] = 10
+
+    // 折れ線グラフを描画
+    let ctx = document.getElementById('canvas').getContext('2d');
+    window.myChart = new Chart(ctx, { // インスタンスをグローバル変数で生成
+        type: 'line',
+        data: lineChartData,
+        options: lineChartOption
+    }); 
+}
+
+/**
+ * TODO 
+ * 該当動画のアクセス時間を更新する関数
+ * @param  {string} fileName 検索ワード
  */
 function updateAccessHistory(fileName) {
     // MySQLとのコネクションの作成
@@ -705,92 +825,9 @@ function updateAccessHistory(fileName) {
     connection.end();           
 }
 
-// グラフ描画処理
-async function drawChart(fileName, current) { 
-
-    // 好感度データの取得
-    //const fileName = 'A211079558';
-    const favoValues = await getFavoValues(fileName);
-    const favoData = [...favoValues].map((d) => {return d.favo_value});
-
-    // x軸ラベル（シーン〇  〇は全角数字）
-    const xAxisLabels = [...Array(favoValues.length).keys()].map((d) => {return "シーン" + zenkaku2Hankaku(String(d+1))});
-
-    const lineChartData = {
-        labels : xAxisLabels, 
-        datasets : [
-            {
-            label: "AA",
-            lineTension: 0,
-            data : favoData, 
-            borderColor: '#00a0dcff',
-            backgroundColor: '#00a0dc11',
-            pointRadius: [3]
-            }
-        ]
-    }
-    const lineChartOption = {
-        scales: {
-            yAxes: [           // Ｙ軸 
-                {
-                    ticks: {     // 目盛り        
-                        min: 0,      // 最小値
-                        // beginAtZero: true でも同じ
-                        //max: 0.06,     // 最大値
-                        stepSize: 0.01  // 間隔
-                    }
-                }
-            ]
-        },
-        legend: {
-            display: false
-        }
-        //responsive: false  // canvasサイズ自動設定機能を使わない。HTMLで指定したサイズに固定
-    }
-
-    // データ
-    for (var i = 0; i < lineChartData.datasets[0].data.length; i++) {
-        lineChartData.datasets[0].pointRadius[i] = 3
-    }
-    
-    lineChartData.datasets[0].pointRadius[current-1] = 10
-    var ctx = document.getElementById('canvas').getContext('2d');
-    window.myChart = new Chart(ctx, { // インスタンスをグローバル変数で生成
-        type: 'line',
-        data: lineChartData,
-        options: lineChartOption
-    }); 
-    console.log(lineChartData.datasets[0].pointRadius)
-}
-/*
-function display_point_current(current) {
-    return 0;
-}
-*/
-
-/**
- * 該当動画の好感度データを取得する関数
- * @return {Object} favoValues 好感度データ
- */
- async function getFavoValues(fileName) {
-    // 問い合わせするSQL文
-    let query = "SELECT favo_value " +
-                "FROM scene_data " +
-                "WHERE video_id='" + fileName + "';";
-
-    // 接続・問い合わせ
-    let favoValues = await mydb.query(query);  // 好感度データ
-    
-    // 接続終了
-    //mydb.close();
-    
-    return favoValues
-}
-
-
 /**
  * 半角英数字を全角英数字に変換する関数
- * @return {String}} 全角英数字に変換した文字列
+ * @return {string}} 全角英数字に変換した文字列
  */
 function zenkaku2Hankaku(str) {
     return str.replace(/[A-Za-z0-9]/g, function(s) {
