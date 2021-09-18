@@ -13,6 +13,9 @@ from thumbnail_img_generate_mod import thumbnail_img_generate
 files = sys.argv[1]
 files = files.split(',')
 
+#files = [r"C:\Users\fukuyori\Downloads\demo60.mp4"]
+#files = [r"C:\Users\fukuyori\CM_Analysis\Data\Movie\A211079558.mp4"]
+
 # パスの設定
 base = os.path.dirname(os.path.abspath(__file__))   # スクリプト実行ディレクトリ（[main.py] のディレクトリ）
 result_cut_path = os.path.normpath(os.path.join(base, 'temp\cut'))          # カットの保存先
@@ -38,7 +41,7 @@ cut_list_generate(result_cut_path, cut_videos_path, cut_list_path) # カット�
 os.chdir(os.path.normpath(os.path.join(base, "video_classfication")))   # 動作認識スクリプトがあるディレクトリに変更
 
 # 動作認識（コマンド実行）
-cmd = 'python main.py --input ..\\temp\\cut_videos.txt --video_root ..\\temp\\cut_list --output ../temp/verb_label.json --model pre_trained_model/resnet-34-kinetics.pth '
+cmd = 'python main.py --input ../temp/cut_videos.txt --video_root ../temp/cut_list --output ../temp/verb_label.json --model pre_trained_model/resnet-34-kinetics.pth '
 out_str = subprocess.run(cmd)
 
 label_shaping() ##### 後で引数指定
