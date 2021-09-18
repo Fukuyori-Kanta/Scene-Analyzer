@@ -76,8 +76,8 @@ def action_recognition():
         ffmpeg_loglevel = 'info'
 
     if os.path.exists('tmp'):
-        subprocess.call('rm -rf tmp', shell=True)
-        #shutil.rmtree('tmp')    # windows用
+        #subprocess.call('rm -rf tmp', shell=True)
+        shutil.rmtree('tmp')    # windows用
     outputs = []
     for input_file in input_files:
         video_path = os.path.join(opt.video_root, input_file)
@@ -99,8 +99,8 @@ def action_recognition():
                 result = classify_video('tmp', input_file, class_names, model, opt)
                 outputs.append(result)
 
-                subprocess.call('rm -rf tmp', shell=True)
-                #shutil.rmtree('tmp')
+                #subprocess.call('rm -rf tmp', shell=True)
+                shutil.rmtree('tmp')
         else:
             print('{} does not exist'.format(input_file))
 

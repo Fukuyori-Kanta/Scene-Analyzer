@@ -14,7 +14,7 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
     let targetPathList = [];    // 分析対象の動画ファイルパスの配列
     let fileCount = 0;          // ファイル数
     let totalFileSize = 0;      // 合計ファイルサイズ
-    const sizeMaxThreshold = 15728640;   // 入力ファイルサイズの上限（15 MB）
+    const sizeMaxThreshold = 15728640 * 2;   // 入力ファイルサイズの上限（15 MB）
     
     let index = 0;              // 結果表示中の動画インデックス
     let shouldStarting = false; // 処理開始フラグ
