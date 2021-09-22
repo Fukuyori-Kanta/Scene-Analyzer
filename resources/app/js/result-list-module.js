@@ -642,8 +642,8 @@ function showContens(videos) {
         let productName = data.product_name; // 作品名
 
         // サムネ画像のパスを取得
-        //let thumbnailPath = fileOperationModule.getThumbnailPath(videoName);  // サムネ画像のパス
-        /* ======= デモ用 ======= */
+        let thumbnailPath = fileOperationModule.getThumbnailPath(videoName);  // サムネ画像のパス
+        /* ======= デモ用 ======= 
         let thumbnailPath = '';
         if(videoName === 'demo60') {
             thumbnailPath = fileOperationModule.getThumbnailPath(videoName);
@@ -651,7 +651,7 @@ function showContens(videos) {
         else {
             thumbnailPath = '..\\images\\cannot_displayed.jpg';
         }
-        /* ======= デモ用 ======= */
+         ======= デモ用 ======= */
 
         // 表示コンテンツ（サムネ画像と作品名）の作成・追加
         // <div>要素を作成

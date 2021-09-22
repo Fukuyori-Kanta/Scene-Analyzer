@@ -206,6 +206,7 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
         let $labels = $('#labels');
         $labels.empty();   // 前のラベルデータを削除
 
+        // ↓↓↓↓↓↓↓↓↓↓↓↓↓↓ リファクタリング ↓↓↓↓↓↓↓↓↓↓↓↓↓↓
         function csv_data(dataPath, sceneNo) {
             const request = new XMLHttpRequest(); // HTTPでファイルを読み込む
             let resut_label
@@ -222,35 +223,45 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
             const dataString = data.split('\n'); //改行で分割
             for (let i = 0; i < dataString.length; i++) { //あるだけループ
                 dataArray[i] = dataString[i].split(',');
+            }                
+            
+            let labelData = dataArray[sceneNo].slice(4, dataArray[sceneNo].length-1) // ラベルデータ
+            // 整形
+            for(let i = 0; i < labelData.length; i++) {
+                labelData[i] = labelData[i].replaceAll(/"/g, "").replaceAll(/'/g, "").replaceAll("[", "").replaceAll("]", "");
             }
-            //let label = results[i].label // ラベル名
-                
+            
             $labels.empty();   // 前のラベルデータを削除
-            let $labelItem = $('<div data-label-id="' + Number(sceneNo) + '" class="label-item"></div>');
-            $labelItem.append('<h3 class="label">' + dataArray[sceneNo].slice(4, dataArray[sceneNo].length) + '</h3>');
-            $labels.append($labelItem);
-            return dataArray;
 
-        }
-
-        let result_label = csv_data('../python/temp/result_label.csv', sceneNo);
-
-        //console.log(typeof(result_label))
-        //console.log(result_label[sceneNo])
-        /*
-        // ラベルが1個もない時
-        if(results[0].labels_id == null) {
-            $labels.append('<div class="no-label">このシーンにはラベルは付与されていません。</div>');
-        } 
-        else {
-            for(let i = 0; i < results.length; i++) {     
-                let label = results[i].label // ラベル名
-                let $labelItem = $('<div data-label-id="' + Number(i+1) + '" class="label-item"></div>');
-                $labelItem.append('<h3 class="label">' + label + '</h3>');
-                $labels.append($labelItem);
+            // ラベルが1個もない時 TODO
+            if(labelData[0] === " ") {
+                // ラベルが1つもない文言を表示
+                $labels.append('<div class="no-label">このシーンにはラベルは付与されていません。</div>');
+            } 
+            else {
+                // 付与されたラベル数だけラベルを表示
+                for(let i = 0; i < labelData.length; i++) {     
+                    let label = labelData[i] // ラベル名
+                    let $labelItem = $('<div data-label-id="' + Number(i+1) + '" class="label-item"></div>');
+                    $labelItem.append('<h3 class="label">' + label + '</h3>');
+                    $labels.append($labelItem);
+                }
             }
+
+            let favoData = []
+            for(let i = 1; i < dataArray.length-1; i++) {  
+                favoData.push(dataArray[i][dataArray[i].length-1])
+            }
+            drawChart(favoData, sceneNo)
+            
+            return dataArray;
         }
-        */
+
+        window.myChart = 0; // 描画時に使用するグローバル変数
+        let resultData = csv_data('../python/temp/result_favo.csv', sceneNo);
+
+        // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑ リファクタリング ↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
         // --------------------------------------------------
         // 別のシーンをクリックした時、データを切り替える
         // --------------------------------------------------
@@ -272,12 +283,54 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
 
                 // ラベルデータ、好感度データを置換
                 //showLabelData(fileName, sceneNo);
-                let result_label = csv_data('../python/temp/result_label.csv', sceneNo);
+                let resultData = csv_data('../python/temp/result_favo.csv', sceneNo);
 
                 // 現在のシーンの枠に色付け
                 $('#modal-main img').css('border-color', '#000');  // 全ての枠を黒色に戻してから
                 $('#modal-main img[data-scene-no=' + sceneNo + ']').css('border-color', '#e00');
             }
+        });
+        // --------------------------------------------------
+        // マウスホイールで横スクロール処理
+        // --------------------------------------------------
+        // イージング（easing）処理
+        jQuery.easing['jswing'] = jQuery.easing['swing'];
+        jQuery.extend( jQuery.easing,
+        {
+            def: 'easeOutQuad',
+            easeOutCirc: function (x, t, b, c, d) {
+                return c * Math.sqrt(1 - (t=t/d-1)*t) + b;
+            }
+        });
+
+        let moving;         // スクロール後の位置
+        let aftermov;       // スクロール後の位置+余韻の距離
+        const after = 100;   // 余韻の距離
+        const speed = 1;    // 1スクロールの移動距離
+        const animation = 'easeOutCirc';    // アニメーション
+        const anm_speed = 700;    // アニメーションスピード
+        $('.horizontal-scroll').on('mousewheel', function(e) {
+            let mov = e.originalEvent.wheelDelta   // 移動量
+
+            // スクロール後の位置の算出
+            moving = $(this).scrollLeft() - mov * speed;
+
+            // スクロールする
+            $(this).scrollLeft(moving);
+            
+            // 余韻の計算
+            if (mov < 0) {
+                // 下にスクロールしたとき
+                aftermov =  moving + after;
+            } else {
+                // 上にスクロールしたとき
+                aftermov =  moving - after;
+            }
+            // 余韻アニメーション
+            $(this).stop().animate({scrollLeft: aftermov}, anm_speed, animation);
+            
+            // 縦スクロールさせない
+            return false;
         });
     }
 
@@ -295,7 +348,7 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
             };
             let pyshell = new PythonShell('main.py', options);
             pyshell.on('message', function(targetPathList) {
-                //console.log(targetPathList) // TODO: 文字化け、終了の通知、ファイル一覧の削除
+                console.log(targetPathList) // TODO: 文字化け、終了の通知、ファイル一覧の削除
                 resolve();
             });
         })   
@@ -481,5 +534,104 @@ const fileOperationModule = require('../js/file-operation-module'); // ファイ
      */
     function isAnalysisTarget(fileName, targetVideoList) {
         return fileName.split('.').pop() === 'mp4' && !targetVideoList.includes(fileName);
+    }
+
+    /**
+     * 折れ線グラフを描画する関数
+     * @param  {Object} favoData 好感度データ
+     * @param  {int}    current  現在のシーン番号
+     */
+    async function drawChart(favoData, current) { 
+        // x軸ラベル（シーン〇  〇は全角数字）
+        const xAxisLabels = [...Array(favoData.length).keys()].map((d) => {return "シーン" + zenkaku2Hankaku(String(d+1));});
+
+        // 描画するグラフのデータ
+        const lineChartData = {
+            labels : xAxisLabels, 
+            datasets : [
+                {
+                label: "好感度",
+                lineTension: 0,
+                data : favoData, 
+                borderColor: '#00a0dcff',
+                backgroundColor: '#00a0dc11',
+                pointRadius: [3]
+                }
+            ]
+        }
+        // グラフのオプション
+        const lineChartOption = {
+            // 大きさ
+            scales: {
+                yAxes: [                    // Ｙ軸 
+                    {
+                        ticks: {            // 目盛り        
+                            min: 0,         // 最小値
+                            //max: 0.06,    // 最大値
+                            stepSize: 0.01  // 間隔
+                        }
+                    }
+                ]
+            },
+            // 凡例
+            legend: {
+                display: false
+            },
+            // アニメーション
+            animation: false, 
+            // マウスオーバー時のカーソル変更関数
+            onHover : function(e, el) {
+                if (! el || el.length === 0) {
+                    $('#canvas').css('cursor', 'default');
+                } else {
+                    $('#canvas').css('cursor', 'pointer');
+                }
+            },
+        }
+
+        // ポイントの大きさを設定（現在シーンには、大きくポイントを描画）
+        for (let i = 0; i < lineChartData.datasets[0].data.length; i++) {
+            lineChartData.datasets[0].pointRadius[i] = 3
+        }
+        lineChartData.datasets[0].pointRadius[current-1] = 10
+
+        let myCanvas = $('#canvas')[0];
+        let ctx = myCanvas.getContext('2d');
+        // 既に描画している場合は、一度クリア
+        // クリアしないと描画ずれが起きる
+        if(myChart) {
+            myChart.destroy();
+        }
+        // 折れ線グラフを描画
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: lineChartData,
+            options: lineChartOption
+        }); 
+
+        /* クリック処理（必要かどうかは検討） 参考 : https://qiita.com/sato_ryu/items/b83eac5c2e1efe29507d    */
+        // ポインタをクリックした場合、該当シーンに遷移する
+        $('#canvas').on('click', function(e) {
+            let item = myChart.getElementAtEvent(e);
+        
+            if (item.length == 0) {
+                return;
+            }
+            
+            let cutNo = item[0]._index + 1  // シーン番号
+                    
+            // 切り替えたシーンの結果を表示する
+            //showResultContents(fileName, cutNo);
+        });
+    }
+
+    /**
+     * 半角英数字を全角英数字に変換する関数
+     * @return {string}} 全角英数字に変換した文字列
+     */
+    function zenkaku2Hankaku(str) {
+        return str.replace(/[A-Za-z0-9]/g, function(s) {
+            return String.fromCharCode(s.charCodeAt(0) + 0xFEE0);
+        });
     }
 }
