@@ -21,8 +21,8 @@ exports.showAccessHistory = async function() {
         let product_name = accessHistory[i].product_name  /// 作品名
 
         // サムネ画像のパスを取得
-        //let thumbnailPath = fileOperationModule.getThumbnailPath(videoName);  // サムネ画像のパス
-        /* ======= デモ用 ======= */
+        let thumbnailPath = fileOperationModule.getThumbnailPath(videoName);  // サムネ画像のパス
+        /* ======= デモ用 ======= 
         let thumbnailPath = '';
         if(videoName === 'demo60') {
             thumbnailPath = fileOperationModule.getThumbnailPath(videoName);
@@ -30,7 +30,7 @@ exports.showAccessHistory = async function() {
         else {
             thumbnailPath = '..\\images\\cannot_displayed.jpg';
         }
-        /* ======= デモ用 ======= */
+         ======= デモ用 ======= */
         
         // 表示コンテンツ（サムネイルと作品名）の作成・追加
         // <div>要素を作成

@@ -18,6 +18,7 @@
 
         <!-- JSの読み込み -->
         <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
         <script type="text/javascript" src="../js/renderer.js"></script>
     </head>
 
@@ -144,7 +145,13 @@
                     <h3 id="labels"></h3>
                     <br>
                     <h2 class="heading tag">このシーンの好感度</h2>
-                    <h3 id="favo"></h3>
+                    <!-- グラフ描画エリア -->
+                    <!--
+                    <h3 id="favo"></h3>sssssssssss
+                    -->
+                    <div class="favo-gragh">
+                        <canvas id="canvas"></canvas>
+                    </div>
                 </div>
             </div>
     
