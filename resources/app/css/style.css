@@ -163,15 +163,8 @@ a {
     transform: translateX(0);
 }
 
-/* ページバックボタン
+/* パンくずリスト
 ------------------------------- */
-.back-button {
-    margin: 5px;
-    padding: 5px;
-    background: #fff;
-    border:2px solid #808080;
-    border-radius:5px; 
-}
 .bread ul {
     display: flex;
     list-style-type: none;
