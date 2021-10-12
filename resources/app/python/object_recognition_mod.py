@@ -29,44 +29,52 @@ print(tf.version.VERSION)
 print("The following GPU devices are available: %s" % tf.test.gpu_device_name())
 
 def run_detector(detector, path):
-  # 画像を読み込んで detector に入力できる形式に変換
-  img = Image.open(path) # Pillow(PIL)
-  if img.mode == 'RGBA' :
-    img = img.convert('RGB')
-  converted_img = img.copy()
-  converted_img = converted_img.resize((227,227),Image.LANCZOS) # 入力サイズに縮小
-  converted_img = np.array(converted_img, dtype=np.float32)     # np.arrayに変換
-  converted_img = converted_img / 255. # 0.0 ～ 1.0 に正規化
-  converted_img = converted_img.reshape([1,227,227,3])
-  converted_img = tf.constant(converted_img)
+    # 画像を読み込んで detector に入力できる形式に変換
+    img = Image.open(path) # Pillow(PIL)
+    if img.mode == 'RGBA' :
+        img = img.convert('RGB')
+    converted_img = img.copy()
+    converted_img = converted_img.resize((227,227),Image.LANCZOS) # 入力サイズに縮小
+    converted_img = np.array(converted_img, dtype=np.float32)     # np.arrayに変換
+    converted_img = converted_img / 255. # 0.0 ～ 1.0 に正規化
+    converted_img = converted_img.reshape([1,227,227,3])
+    converted_img = tf.constant(converted_img)
 
-  t1 = time.time()
-  result = detector(converted_img) # 一般物体検出（本体）
-  t2 = time.time()
-  print(f'検出時間 : {t2-t1:.3f} 秒' )
+    t1 = time.time()
+    result = detector(converted_img) # 一般物体検出（本体）
+    t2 = time.time()
+    print(f'検出時間 : {t2-t1:.3f} 秒' )
 
-  # 結果をテキスト出力するための準備
-  r = {key:value.numpy() for key,value in result.items()}
-  boxes =       r['detection_boxes']
-  scores =      r['detection_scores']
-  decode = np.frompyfunc( lambda p : p.decode('ascii'), 1, 1)
-  class_names = decode( r['detection_class_entities'] )
+    # 結果をテキスト出力するための準備
+    r = {key:value.numpy() for key,value in result.items()}
+    boxes =  r['detection_boxes']
+    scores = r['detection_scores']
+    decode = np.frompyfunc( lambda p : p.decode('ascii'), 1, 1)
+    class_names = decode( r['detection_class_entities'] )
 
-  label = []    # 付与されたラベル
-  # スコアが 0.25 以上の結果（n件）についてテキスト出力
-  #print(f'検出オブジェクト' )
-  n = np.count_nonzero(scores >= 0.25 )
-  for i in range(n):
-    y1, x1, y2, x2 = tuple(boxes[i])
-    x1, x2 = int(x1*img.width), int(x2*img.width)
-    y1, y2 = int(y1*img.height),int(y2*img.height)
-    t = f'{class_names[i]:10} {100*scores[i]:3.0f}%  '
-    t += f'({x1:>4},{y1:>4}) - ({x2:>4},{y2:>4})'
-    print(t)
-    label.append(class_names[i] + '(' + str(round(100*scores[i], 2)) + '%)')
+    # スコアが 0.25 以上の結果（n件）についてテキスト出力
+    n = np.count_nonzero(scores >= 0.25)
+    label_data = [] # ラベルデータ
+    
+    for i in range(n):
+        # 冗長ラベル以外のラベルを追加する
+        if(should_add_label(class_names[i])):
+            # 座標（y1, x1, y2, x2）から始点と幅・高さ（x, y, w, h）に変換する
+            y1, x1, y2, x2 = tuple(boxes[i])  
+            x, w = int(x1*img.width), int(x2*img.width) - int(x1*img.width)
+            y, h = int(y1*img.height), int(y2*img.height) - int(y1*img.height)
+            
+            t = f'{class_names[i]:10} {100*scores[i]:3.0f}%  '
+            t += f'({x1:>4},{y1:>4}) - ({x2:>4},{y2:>4})'
 
-  return label
+            label_data.append([class_names[i], scores[i], x, y, w, h])
 
+    return label_data
+
+def should_add_label(label):
+    # 冗長なラベルは追加しない
+    return not label in ['Human face', 'Clothing', 'Person']
+    
 def object_recognition(result_cut_img_path, result_noun_path):
     # --------------------------------------------------
     # 動画IDリストの作成
@@ -78,8 +86,8 @@ def object_recognition(result_cut_img_path, result_noun_path):
     # --------------------------------------------------
     print('モジュールの読み込み中...')
     # モジュールの読み込み
-    #module_handle = "https://tfhub.dev/google/faster_rcnn/openimages_v4/inception_resnet_v2/1"
-    module_handle = "https://tfhub.dev/google/openimages_v4/ssd/mobilenet_v2/1"
+    module_handle = "https://tfhub.dev/google/faster_rcnn/openimages_v4/inception_resnet_v2/1"
+    #module_handle = "https://tfhub.dev/google/openimages_v4/ssd/mobilenet_v2/1"
     detector = hub.load(module_handle).signatures['default']
     print('モジュール読み込み完了')
     # TODO 読み取りエラーの例外処理追加
@@ -105,8 +113,8 @@ def object_recognition(result_cut_img_path, result_noun_path):
             print('[' + cut_no + ']')
 
             # 物体検出・認識
-            label = run_detector(detector, path)            # 検出結果のラベル
-            label_list.append([video_id, cut_no, label])    # [動画ID, カット番号, ラベルリスト]
+            label_data = run_detector(detector, path)            # 検出結果のラベル
+            label_list.append([video_id, cut_no] + [label_data])   # [動画ID, カット番号, ラベルリスト[ラベル名, スコア, x座標, y座標, 幅, 高さ]]
 
             print('-----------------')
         label_result.append(label_list)

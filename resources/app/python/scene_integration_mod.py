@@ -60,15 +60,6 @@ def intersect_list(lst1, lst2):
             arr.append(element)
     return arr
 
-# ラベルを統合する　
-def integrate_label(label1, label2):
-    common_label = intersect_list(label1, label2)
-    label1_sub =  subtract_list(label1, label2)
-    label2_sub =  subtract_list(label2, label1)
-    integrated_label = common_label + label1_sub + label2_sub
-
-    return integrated_label  
-
 # ラベル同士の比較、類似度の算出
 def label_comp(prev_id, next_id, prev_label, next_label):
     # 両方のラベルデータが存在するとき
@@ -180,40 +171,33 @@ def scene_integration(files):
     for i in range(len(cut_data)):
         # インデックスが最後の場合、類似度は算出せずにシーンデータに追加
         if i == len(cut_data)-1:
-            # 冗長なラベルの削除
-            label = [l for l in ast.literal_eval(cut_data[i][4]) if l != '服' and l != '顔' and l != '人']  
-
-            # ラベル名(個数)の形に加工
-            processed_label = [c[0] + '(' + str(c[1]) + ')' for c in Counter(label).most_common()]
-            scene_data.append([cut_data[i][0], cut_data[i][2], cut_data[i][3], processed_label])
+            label = [l for l in ast.literal_eval(cut_data[i][4])]  # ラベルデータ
+            
+            scene_data.append([cut_data[i][0], cut_data[i][2], cut_data[i][3], label])
             break
 
         prev_id = cut_data[i][0]      # 動画ID
         next_id = cut_data[i+1][0]    # 次データの動画ID
 
-        prev_label = cut_data[i][4]   # ラベル
-        next_label = cut_data[i+1][4] # 次データのラベル
+        prev_label_data = ast.literal_eval(cut_data[i][4])   # ラベル
+        next_label_data = ast.literal_eval(cut_data[i+1][4]) # 次データのラベル
+    
+        prev_label = [labels[0] if isinstance(labels, list) else labels for labels in prev_label_data] # ラベル
+        next_label = [labels[0] if isinstance(labels, list) else labels for labels in next_label_data] # 次データのラベル
         
         cut_range = (cut_data[i][2], cut_data[i][3])    # カット範囲
-
-        # 冗長なラベルの削除
-        prev_label = [l for l in ast.literal_eval(prev_label) if l != '服' and l != '顔' and l != '人']      
-        next_label = [l for l in ast.literal_eval(next_label) if l != '服' and l != '顔' and l != '人']
 
         # 統合するかを判定（True : 統合する，False : 統合しない）
         isintegrate = label_comp(prev_id, next_id, prev_label, next_label)
         if isintegrate:
-            label = integrate_label(prev_label, next_label) # ラベル統合（共通ラベル + お互いに無いラベル)
+            label = prev_label_data + next_label_data
+            #print(prev_id, cut_data[i][1], label)  # シーン統合箇所（TODO: カット画像が複数になるため、アノテーションが困難か？）
             cut_range = (cut_data[i][2], cut_data[i+1][3])  # カット範囲統合
         else:
-            label = prev_label
-        
-        # ラベル名(個数)の形に加工
-        #processed_label = [c[0] + '(' + str(c[1]) + ')' for c in Counter(label).most_common()] 
-        processed_label = [c[0] for c in Counter(label).most_common()]  # 個数なし（2021/9/8）
-        
+            label = prev_label_data
+                
         # ラベルデータに追加
-        scene_data.append([prev_id, cut_range[0], cut_range[1], processed_label])
+        scene_data.append([prev_id, cut_range[0], cut_range[1], label])
         
     # カット範囲が重なっているデータを削除する
     remove_target = [n for p, n in zip(scene_data, scene_data[1:]) if p[0] == n[0] and int(p[2]) >= int(n[1])]
