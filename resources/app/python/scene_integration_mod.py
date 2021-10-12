@@ -179,14 +179,12 @@ def scene_integration(files):
         prev_id = cut_data[i][0]      # 動画ID
         next_id = cut_data[i+1][0]    # 次データの動画ID
 
-        prev_label_data = cut_data[i][4]   # ラベルデータ
-        next_label_data = cut_data[i+1][4] # 次データのラベルデータ
-
-        # 前後のラベル（のみ）のデータの抽出
-        # バウンディングボックス範囲は除く
-        prev_label = [labels[0] if isinstance(labels, list) else labels for labels in ast.literal_eval(prev_label_data)] # ラベル
-        next_label = [labels[0] if isinstance(labels, list) else labels for labels in ast.literal_eval(next_label_data)] # 次データのラベル
-
+        prev_label_data = ast.literal_eval(cut_data[i][4])   # ラベル
+        next_label_data = ast.literal_eval(cut_data[i+1][4]) # 次データのラベル
+    
+        prev_label = [labels[0] if isinstance(labels, list) else labels for labels in prev_label_data] # ラベル
+        next_label = [labels[0] if isinstance(labels, list) else labels for labels in next_label_data] # 次データのラベル
+        
         cut_range = (cut_data[i][2], cut_data[i][3])    # カット範囲
 
         # 統合するかを判定（True : 統合する，False : 統合しない）
