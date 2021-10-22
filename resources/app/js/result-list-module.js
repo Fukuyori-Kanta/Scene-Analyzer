@@ -225,7 +225,11 @@
             $('#input-area').append('<div class="add-btn"><p>追加</p></div>');
 
             isfirstClick = false;
-        }        
+        } 
+
+        //window.open('test.html/' + fileName + '/' + cutNo , null, 'width=1000,toolbar=yes,menubar=yes,scrollbars=yes');
+        window.open('test.html?search=' + fileName + '-' + cutNo, null, 'width=1000,toolbar=yes,menubar=yes,scrollbars=yes');
+
 
         // [削除]ボタンを追加
         // 既に追加されている場合は、追加しない
@@ -380,6 +384,100 @@
         showResultContents(fileName, cutNo);
     });  
 
+    var Canvas;
+    var Context;
+    var RectEdgeColor = "#0BF";
+    var RectInnerColor = "rgba(174,230,255,0.3)";
+    var IndicatorColor = "#0082af";
+    var index = 0;
+    var DrawingMemory = { 0: { x: null, y: null, w: null, h: null } };
+    window.addEventListener('load', function () {
+        Canvas = document.getElementById('ex3');
+        Context = Canvas.getContext('2d');
+        Context.strokeStyle = IndicatorColor;
+        Context.fillStyle = RectInnerColor;
+        Context.lineWidth = 1;
+
+        ctx.drawImage(image, dx, dy)
+
+        var startPosition = { x: null, y: null };
+        var isDrag; // ドラッグ&ドロップのフラグ
+
+        function dragStart(x, y) {
+            isDrag = true;
+            startPosition.x = x;
+            startPosition.y = y;
+        }
+
+        function dragEnd(x, y) {
+            if (isDrag) {
+                DrawingMemory[index] = { x: startPosition.x, y: startPosition.y, w: x - startPosition.x, h: y - startPosition.y };
+                index += 1;
+                drawFromMemory();
+            } else {
+                clear();
+                drawFromMemory();
+            }
+            isDrag = false;
+        }
+
+        function drawFromMemory() {
+            Context.strokeStyle = RectEdgeColor;
+            for (i = 0; i < index; i++) {
+                Context.fillRect(DrawingMemory[i].x, DrawingMemory[i].y, DrawingMemory[i].w, DrawingMemory[i].h);
+            }
+            for (i = 0; i < index; i++) {
+                Context.strokeRect(DrawingMemory[i].x, DrawingMemory[i].y, DrawingMemory[i].w, DrawingMemory[i].h);
+            }
+            Context.strokeStyle = IndicatorColor;
+        }
+
+        function draw(x, y) {
+            clear(); // Initialization.
+            drawFromMemory(); // Draw Bounding Boxes.
+
+            // Draw Indicator.
+            Context.beginPath();
+            Context.moveTo(0, y); // start
+            Context.lineTo(Canvas.width, y); // end
+            Context.moveTo(x, 0); // start
+            Context.lineTo(x, Canvas.height); // end
+            Context.closePath();
+            Context.stroke();
+
+            // Draw the current Bounding Box.
+            if (isDrag) {
+                Context.strokeStyle = RectEdgeColor;
+                Context.fillRect(startPosition.x, startPosition.y, x - startPosition.x, y - startPosition.y);
+                Context.strokeRect(startPosition.x, startPosition.y, x - startPosition.x, y - startPosition.y);
+                Context.strokeStyle = IndicatorColor;
+            }
+
+        }
+
+        function mouseHandler() {
+            Canvas.addEventListener('mousedown', function (e) {
+                dragStart(e.layerX, e.layerY);
+            });
+            Canvas.addEventListener('mouseup', function (e) {
+                dragEnd(e.layerX, e.layerY);
+            });
+            Canvas.addEventListener('mouseout', function (e) {
+                dragEnd(e.layerX, e.layerY);
+            });
+            Canvas.addEventListener('mousemove', function (e) {
+                draw(e.layerX, e.layerY);
+            });
+        }
+        mouseHandler();
+    });
+
+    function clear() {
+        Context.clearRect(0, 0, Canvas.width, Canvas.height);
+    }
+
+
+
     // --------------------------------------------------
     // マウスホイールで横スクロール処理
     // --------------------------------------------------
@@ -465,26 +563,26 @@
     else {
         let qry1 =  "SELECT works_data.video_id, works_data.product_name " +
                     "FROM scene_data INNER JOIN works_data ON scene_data.video_id = works_data.video_id " + 
-                    "WHERE labels_id IN ( " +
-                        "SELECT labels_id " +
-                        "FROM labels_data " +
-                        "WHERE labels_id in ( " +
-                            "SELECT DISTINCT(labels_id) FROM labels_data " +
-                            "WHERE label = '" + words[0] + "')) " +
+                    "WHERE scene_data.scene_label_id IN ( " +
+                        "SELECT scene_label.scene_label_id " +
+                        "FROM scene_label INNER JOIN label_list ON scene_label.label_id = label_list.label_id " +
+                        "WHERE scene_label.scene_label_id in ( " +
+                            "SELECT DISTINCT(scene_label_id) FROM scene_label " +
+                            "WHERE label_name_ja = '" + words[0] + "')) " +
                     "GROUP BY works_data.video_id; ";
         
         let qry2 =  "SELECT works_data.video_id, works_data.product_name " + 
                     "FROM scene_data INNER JOIN works_data ON scene_data.video_id = works_data.video_id " + 
-                    "WHERE labels_id IN ( " +
-                        "SELECT labels_id " +
-                        "FROM labels_data " +
-                        "WHERE labels_id in ( " +
-                            "SELECT t1.labels_id FROM " +
-                                "(SELECT DISTINCT(labels_id) FROM labels_data " +
-                                "WHERE label = '" + words[0] + "') As t1, " +
-                                "(SELECT DISTINCT(labels_id) FROM labels_data " +
-                                "WHERE label = '" + words[1] + "') As t2 " +
-                            "WHERE t1.labels_id = t2.labels_id )) " +
+                    "WHERE scene_data.scene_label_id IN ( " +
+                        "SELECT scene_label.scene_label_id " +
+                        "FROM scene_label INNER JOIN label_list ON scene_label.label_id = label_list.label_id " +
+                        "WHERE scene_label.scene_label_id in ( " +
+                            "SELECT t1.scene_label_id FROM " +
+                                "(SELECT DISTINCT(scene_label_id) FROM scene_label " +
+                                "WHERE label_name_ja = '" + words[0] + "') As t1, " +
+                                "(SELECT DISTINCT(scene_label_id) FROM scene_label " +
+                                "WHERE label_name_ja = '" + words[1] + "') As t2 " +
+                            "WHERE t1.scene_label_id = t2.scene_label_id )) " +
                     "GROUP BY works_data.video_id; ";
         
         let qry3 =  "SELECT works_data.video_id, works_data.product_name " + 
@@ -534,8 +632,10 @@
  */
  async function getLabelData(fileName, sceneNo) {
     // 問い合わせするSQL文
-    let query = "SELECT labels_data.labels_id, labels_data.label " +
-                "FROM scene_data LEFT JOIN labels_data ON scene_data.labels_id=labels_data.labels_id " +
+    let query = "SELECT scene_label.scene_label_id, label_list.label_name_ja " +
+                "FROM scene_label " + 
+                "LEFT JOIN scene_data ON scene_label.scene_label_id = scene_data.scene_label_id " +
+                "LEFT JOIN label_list ON scene_label.label_id = label_list.label_id " +
                 "WHERE video_id='" + fileName + "' AND scene_no='scene_" + sceneNo + "';";
 
     // 接続・問い合わせ
@@ -553,9 +653,11 @@
  */
  async function getFavoValues(fileName) {
     // 問い合わせするSQL文
-    let query = "SELECT favo_value " +
-                "FROM scene_data " +
-                "WHERE video_id='" + fileName + "';";
+    let query = "SELECT scene_favo.favo " +
+                "FROM scene_favo " + 
+                "LEFT JOIN scene_data ON scene_favo.scene_favo_id = scene_data.scene_favo_id " +
+                "LEFT JOIN score_category ON scene_favo.category = score_category.category " +
+                "WHERE scene_data.video_id='" + fileName + "' AND score_category.category = 'F';";
 
     // 接続・問い合わせ
     let favoValues = await mydb.query(query);  // 好感度データ
@@ -563,7 +665,7 @@
     // 接続終了
     //mydb.close();
     
-    return [...favoValues].map((d) => {return d.favo_value;});
+    return [...favoValues].map((d) => {return d.favo;});
 }
 
 /**
@@ -679,7 +781,7 @@ function showContens(videos) {
     // ラベルデータを取得
     // --------------------------------------------------
     const labelData = await getLabelData(fileName, sceneNo);  // ラベルデータ
-    
+    console.log(labelData)
     // --------------------------------------------------
     // ラベルを表示
     // --------------------------------------------------
@@ -687,14 +789,14 @@ function showContens(videos) {
     $labels.empty();   // 前のラベルデータを削除
     
     // ラベルが1個もない時
-    if(labelData[0].labels_id == null) {
+    if(labelData[0].scene_label_id == null) {
         // ラベルが1つもない文言を表示
         $labels.append('<div class="no-label">このシーンにはラベルは付与されていません。</div>');
     } 
     else {
         // 付与されたラベル数だけラベルを表示
         for(let i = 0; i < labelData.length; i++) {     
-            let label = labelData[i].label // ラベル名
+            let label = labelData[i].label_name_ja // ラベル名
             let $labelItem = $('<div data-label-id="' + Number(i+1) + '" class="label-item"></div>');
             $labelItem.append('<h3 class="label">' + label + '</h3>');
             $labels.append($labelItem);
@@ -712,7 +814,7 @@ function showContens(videos) {
     // 好感度データを取得
     // --------------------------------------------------
     const favoValues = await getFavoValues(fileName);
-
+    console.log(favoValues)
     // --------------------------------------------------
     // 好感度を表示
     // --------------------------------------------------        
@@ -752,6 +854,14 @@ function showResultContents(fileName, cutNo) {
         // 現在のシーンの枠に色付け
         $('#result-show img').css('border-color', '#000');  // 全ての枠を黒色に戻してから
         $('#result-show img[data-cut-no=' + cutNo + ']').css('border-color', '#e00');
+
+        // --------------------------------------------------
+        // [編集]ボタンが押された時の処理
+        // --------------------------------------------------
+        $('.edit-btn').on('click', function(e) {
+            window.open('test.html?search=' + fileName + '-' + cutNo, null, 'width=1000,toolbar=yes,menubar=yes,scrollbars=yes');
+        });
+        
     }
 }
 

@@ -1,0 +1,322 @@
+﻿<!doctype html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Scene Analyzer</title>
+    <meta name="description" content="カット分割・ラベル付けの結果を表示する">
+
+    <!-- ファビコンの設定
+          <link rel="icon" type="image/png" href="images/favicon.png">
+        -->
+
+    <!-- CSSの読み込み -->
+    <link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Philosopher">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- JSの読み込み -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.5.0/fabric.min.js"></script>
+    <script type="text/javascript" src="../js/renderer.js"></script>
+    
+    <style>
+        .layer-wrap {
+            width: 852px;
+            height: 480px;
+            position: relative;
+        }            
+        .layer-wrap > canvas {
+            position: absolute;
+        }
+
+    </style>
+</head>
+
+<body id="index">
+    <div class="layer-wrap">
+        <canvas id="imgae-area" width="852px" height="480px" style="border: 1.5px solid #000;"></canvas>
+        <canvas id="draw-area" width="852px" height="480px" style="border: 1.5px solid #000;"></canvas>
+    </div>
+    <!--<textarea></textarea>-->
+    <!-- ラベル入力欄 -->
+    <div id="input-area">
+        <input id="input-word" type="text" size="25" placeholder="ラベル名を入力して下さい">
+        <div class="add-btn"><p>追加</p></div>
+    </div>
+    
+    <!-- ラベル -->
+    <div id="labels"></div>
+
+    <script>
+        window.addEventListener('load', async function () {
+            
+            // カット画像の表示と付与済みラベルのバウンディングボックスの描画
+            drawImage_area();
+
+            // 新規バウンディングボックスの描画
+            drawDraw_area();
+            /*
+            var canvas = new fabric.Canvas('draw-area');
+ 
+            var rect = new fabric.Rect({
+                left: 110,         //左
+                top: 70,           //上
+                width: 120,        //幅
+                height: 80,        //高さ
+                angle: 20,         //角度
+                strokeWidth: 5,    //線の幅
+                stroke: 'blue',    //線の色
+                fill: 'royalblue', //塗潰し色
+                
+                hasRotatingPoint: false, // 回転の無効化
+            });
+            
+            canvas.add(rect);
+
+            left = Math.round(rect.left);
+            top = Math.round(rect.top);
+            width = Math.round(rect.width * rect.scaleX);
+            height = Math.round(rect.width * rect.scaleX);
+            angle = Math.round(rect.angle);
+            strokeWidth = rect.strokeWidth;
+            stroke = rect.stroke;
+            fill = rect.fill;
+
+            //値取得と表示
+            function getProperty(){
+                $('textarea').text(
+                    'left = ' + Math.round(rect.left) + '\n' +
+                    'top = ' + Math.round(rect.top) + '\n' +
+                    'width = ' + Math.round(rect.width * rect.scaleX) + '\n' +
+                    'height = ' + Math.round(rect.width * rect.scaleX) + '\n' +
+                    'angle = ' + Math.round(rect.angle) + '\n' +
+                    'strokeWidth = ' + rect.strokeWidth + '\n' +
+                    'stroke = ' + rect.stroke + '\n' +
+                    'fill = ' + rect.fill
+                );
+            }
+ 
+            //変更されたときのイベント処理
+            canvas.on('object:modified', function(){
+                getProperty();
+            });
+
+            */
+        });
+
+        async function drawImage_area() { 
+            const query = location.search;
+            const value = query.split('=');
+            const fileName = decodeURIComponent(value[1]).split('-')[0];     // ファイル名
+            const sceneNo = Number(decodeURIComponent(value[1]).split('-')[1]) // カット数
+            console.log(fileName, sceneNo)
+
+            
+            let Canvas = $('#imgae-area')[0];
+            let Context = Canvas.getContext('2d');
+            var RectEdgeColor = "#0BF";
+            var RectInnerColor = "rgba(0, 0, 0)";
+            var IndicatorColor = "#0082af";
+
+            let thumbnailPath = path.join('../result/thumbnail/', fileName, '/thumbnail' + sceneNo + '.jpg');
+            console.log(thumbnailPath)
+
+            const labelData = await getBoundingBox(fileName, sceneNo);  // ラベルデータ
+
+            console.log(labelData)
+
+            let img = new Image();
+            img.src = thumbnailPath;
+            
+            let width = Canvas.width;
+            let height = Canvas.height;
+            img.onload = function() {
+                Context.drawImage(img, 0, 0, width, height);
+                
+                Context.lineWidth = 2
+                Context.font = '8pt Arial';
+                //Context.strokeStyle = "rgb(0, 0, 255)"
+                //Context.fillStyle = 'rgba(0, 255, 128)';
+                
+                Context.strokeStyle = IndicatorColor;
+                Context.fillStyle = RectInnerColor;
+                for(let data of labelData) {    
+                    let labelName = data.label_name_ja;
+                    let score = data.recognition_score;
+
+                    let size = 2;
+                    let x = data.x_axis * size;
+                    let y = data.y_axis * size;
+                    let w = data.width * size;
+                    let h = data.height * size;
+
+                    console.log(labelName + ' (' + Math.round(score * Math.pow(10, 3)) / Math.pow(10, 3) + ') ', x, y, w, h);
+                    Context.strokeRect (x, y, w, h);
+                    Context.fillText(labelName + ' (' + Math.round(score * Math.pow(10, 3)) / Math.pow(10, 3) + ') ', x+5, y+12);
+                }
+            }
+        }
+
+        /* 該当シーンのラベルデータを取得する関数
+        * @param  {string} fileName  動画ID 
+        * @param  {int}    sceneNo   シーン番号
+        * @return {Object} labelData ラベルデータ（labels_id, label）
+        */
+        async function getBoundingBox(fileName, sceneNo) {
+            // 問い合わせするSQL文
+            let query = "SELECT label_list.label_name_ja, scene_label.recognition_score, scene_label.x_axis, scene_label.y_axis, scene_label.width, scene_label.height " +
+                        "FROM scene_label " + 
+                        "LEFT JOIN scene_data ON scene_label.scene_label_id = scene_data.scene_label_id " +
+                        "LEFT JOIN label_list ON scene_label.label_id = label_list.label_id " +
+                        "WHERE video_id='" + fileName + "' AND scene_no='scene_" + sceneNo + "';";
+
+            // 接続・問い合わせ
+            let labelData = await mydb.query(query);  // 全ＣＭの動画IDと作品名
+            
+            // 接続終了
+            //mydb.close(); // 同じページで何度も利用するため
+
+            return labelData;
+        }
+
+        
+        function drawDraw_area() {
+            let Canvas = $('#draw-area')[0];
+            let Context = Canvas.getContext('2d');
+            var RectEdgeColor = "#0BF";            
+            var RectInnerColor = "rgba(174,230,255,0.3)";
+            var IndicatorColor = "rgba(0, 0, 0, 0.6)";
+            var index = 0;
+            var DrawingMemory = { 0: { x: null, y: null, w: null, h: null } };
+
+            Context.strokeStyle = IndicatorColor;
+            Context.fillStyle = RectInnerColor;
+            Context.lineWidth = 2;
+            var startPosition = { x: null, y: null };
+            var isDrag;
+
+            function dragStart(x, y) {
+                isDrag = true;
+                startPosition.x = x;
+                startPosition.y = y;
+                //console.log(startPosition)
+            }
+
+            function dragEnd(x, y) {
+                if (isDrag) {
+                    DrawingMemory[index] = { x: startPosition.x, y: startPosition.y, w: x - startPosition.x, h: y - startPosition.y };
+                    index += 1;
+                    drawFromMemory();
+                } else {
+                    clear();
+                    drawFromMemory();
+                }
+                isDrag = false;
+            }
+
+            function drawFromMemory() {
+                Context.strokeStyle = RectEdgeColor;
+                
+                for (i = 0; i < index; i++) {
+                    Context.fillRect(DrawingMemory[i].x, DrawingMemory[i].y, DrawingMemory[i].w, DrawingMemory[i].h);
+                }
+                for (i = 0; i < index; i++) {
+                    Context.strokeRect(DrawingMemory[i].x, DrawingMemory[i].y, DrawingMemory[i].w, DrawingMemory[i].h);
+                }
+                Context.strokeStyle = IndicatorColor;
+            }
+
+            function draw(x, y) {
+                clear(); // Initialization.
+                drawFromMemory(); // Draw Bounding Boxes.
+
+                // Draw Indicator.
+                Context.beginPath();
+                Context.moveTo(0, y); // start
+                Context.lineTo(Canvas.width, y); // end
+                Context.moveTo(x, 0); // start
+                Context.lineTo(x, Canvas.height); // end
+                Context.closePath();
+                Context.stroke();
+
+                // Draw the current Bounding Box.
+                if (isDrag) {
+                    Context.strokeStyle = RectEdgeColor;
+                    Context.fillRect(startPosition.x, startPosition.y, x - startPosition.x, y - startPosition.y);
+                    Context.strokeRect(startPosition.x, startPosition.y, x - startPosition.x, y - startPosition.y);
+                    Context.strokeStyle = IndicatorColor;
+                }
+            }
+
+            function mouseHandler() {
+                Canvas.addEventListener('mousedown', function (e) {
+                    dragStart(e.layerX, e.layerY);
+                });
+                Canvas.addEventListener('mouseup', function (e) {
+                    dragEnd(e.layerX, e.layerY);
+                });
+                Canvas.addEventListener('mouseout', function (e) {
+                    dragEnd(e.layerX, e.layerY);
+                });
+                Canvas.addEventListener('mousemove', function (e) {
+                    draw(e.layerX, e.layerY);
+                });
+            }
+            mouseHandler();
+            
+            function clear() {
+                Context.clearRect(0, 0, Canvas.width, Canvas.height);
+            }        
+
+        }
+        // --------------------------------------------------
+        // [追加]ボタンが押された時の処理
+        // --------------------------------------------------
+        $(document).on('click', '.add-btn', function(e) {
+            let $inputWord = $('#input-word').val();
+            // 検索単語が入力されている時にラベルを追加
+            if($inputWord) {
+                // １つもラベルがない時、「このシーンにはラベルは付与されていません。」を削除
+                if($('#labels').children().attr("class") == 'no-label') {
+                    $('.no-label').remove();
+                }
+                // ラベルを追加
+                let $labels = $('#labels');
+                let labelId = 3; /////////
+                let $labelItem = $('<div data-label-id="' + labelId + '" class="label-item"></div>');
+                $labelItem.append('<h3 class="label add-label">' + $inputWord + '</h3>');
+
+                // [削除]ボタンを追加
+                $labelItem.append('<div class="delete-btn" data-id="' + labelId +'"><span>×</span></div>');
+
+                // 追加要素を反映
+                $labels.append($labelItem);
+                
+                // ラベル入力欄のテキストを削除
+                $('#input-word').val("");
+
+                // 追加した[削除]ボタンを表示
+                $('.delete-btn').css('opacity', '1');
+            }
+        });
+
+        // --------------------------------------------------
+        // ラベル入力欄でEnterキーが押された時の処理
+        // --------------------------------------------------
+        $(document).on('keypress', '#input-word', function(e) {
+            let key = e.which;
+            if(key == 13) {
+                // 検索ボタンが押された時の処理
+                $('.add-btn').trigger('click');
+
+                return false;
+            }
+        });
+    </script>
+
+
+</body>
+
+</html>
