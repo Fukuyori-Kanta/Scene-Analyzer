@@ -1,4 +1,6 @@
-﻿/**
+﻿const annotationModule = require('../js/annotation-module');        // アノテーションモジュール 
+
+/**
  * 
  * @module resultListFunc
  */
@@ -118,26 +120,27 @@
 
     // 各種フォルダパス 
     const resultPath = path.join(__dirname, '../result');     // resultフォルダのパス
-    const cutPath = path.join(resultPath, 'scene');        // カット動画フォルダのパス
-    const cutImgPath = path.join(resultPath, 'thumbnail'); // カット画像フォルダのパス
+    const scenePath = path.join(resultPath, 'scene');         // シーン動画フォルダのパス
+    const thumbnailPath = path.join(resultPath, 'thumbnail'); // サムネ画像フォルダのパス
     
     // --------------------------------------------------
     // 動画情報を[result_list.html]から取得、表示
     // --------------------------------------------------
     const query = location.search;
     const value = query.split('=');
-    const fileName = decodeURIComponent(value[1]);  // ファイル名
+    const videoId = decodeURIComponent(value[1]);  // 動画ID
 
     // --------------------------------------------------
     // アクセス履歴を更新
     // --------------------------------------------------
-    updateAccessHistory(fileName);
+    updateAccessHistory(videoId);
     
     // --------------------------------------------------
-    // 作品名とカット番号を表示
+    // 作品名とシーン番号を表示
     // --------------------------------------------------
-    const productName = await getProductName(fileName); // 作品名
-    let cutNo = 1;  // カット番号（初期値は１を設定）
+    const productName = await getProductName(videoId); // 作品名
+    ///////////////////////////let sceneNo = 1;  // シーン番号（初期値は１を設定）
+    sceneNo = 1;
 
     // パンくずリストに作品名を表示
     $('.bread ul').append('<li>' + productName + "</li>").trigger('create');
@@ -145,16 +148,16 @@
     // タイトルに作品名を表示
     $('#file-name').text(productName);
 
-    // カット番号を表示
-    $('#cut-no').text(cutNo + 'シーン目');
+    // シーン番号を表示
+    $('#scene-no').text(sceneNo + 'シーン目');
     
     // --------------------------------------------------
     // [result]フォルダから動画データを読み込み、表示
     // --------------------------------------------------
-    let targetFolderPath = path.join(cutImgPath, fileName)    // 該当フォルダのパス
+    let targetFolderPath = path.join(thumbnailPath, videoId)    // 該当フォルダのパス
 
-    // 該当フォルダのカット画像一覧を取得
-    let fileList = fileOperationModule.getFileList(targetFolderPath); // カット画像のファイル名一覧
+    // 該当フォルダのサムネ画像一覧を取得
+    let fileList = fileOperationModule.getFileList(targetFolderPath); // サムネ画像のファイル名一覧
 
     // 動画を表示
     let $currentVideo = $('#movie-screen'); // 現在表示中の動画 
@@ -162,321 +165,58 @@
     // <video>要素を作成・追加
     let $video = $('<video></video>');
     $video.attr({
-        'src': path.join(cutPath, fileName, 'scene' + cutNo + '.mp4'),
+        'src': path.join(scenePath, videoId, 'scene' + sceneNo + '.mp4'),
         'controls': true,
         'autoplay': true
     });  
     $currentVideo.append($video);
 
-    // カット数を表示
-    $('#cut-cnt').text(fileList.length);
+    // シーン数を表示
+    $('#scene-cnt').text(fileList.length);
 
-    // カット一覧表示
-    let $videoList = $('#scene-list');  // カット一覧
+    // シーン一覧表示
+    let $videoList = $('#scene-list');  // シーン一覧
     for(let i = 0, len = fileList.length; i < len; i++){
         // <li>要素を作成
         let $li = $('<li></li>');
         $li.attr('class', 'item');
 
         // <img>要素を作成
-        let $cutImg = $('<img>');
-        $cutImg.attr({
-            'data-cut-no': i+1,
+        let $thumbnail = $('<img>');
+        $thumbnail.attr({
+            'data-scene-no': i+1,
             'class': 'thumbnail',
-            'src': path.join(cutImgPath, fileName, fileList[i])
+            'src': path.join(thumbnailPath, videoId, fileList[i])
         });
 
         // ノードの組み立て
-        $li.append($cutImg);
+        $li.append($thumbnail);
         $videoList.append($li);
     }
 
     // 現在のシーンの枠に色付け
     $('#result-show img').css('border-color', '#000');  // 全ての枠を黒色に戻してから
-    $('#result-show img[data-cut-no=' + cutNo + ']').css('border-color', '#e00');
+    $('#result-show img[data-scene-no=' + sceneNo + ']').css('border-color', '#e00');
 
     // --------------------------------------------------
     // ラベルデータと好感度データをDBから取得、表示
     // --------------------------------------------------
     // ラベルデータを表示
-    showLabelData(fileName, cutNo);
+    showLabelData(videoId, sceneNo);
 
     // 好感度データを表示
     window.myChart = 0; // 描画時に使用するグローバル変数
-    showFavoData(fileName, cutNo);
+    showFavoData(videoId, sceneNo);
 
     // --------------------------------------------------
-    // アノテーション機能
-    // --------------------------------------------------
-    let isfirstClick = true;   // [結果を表示]ボタンを初回クリック時だけtrue
-    let temp = [];  // 削除するラベル群
-
-    // 各ボタンを非表示
-    $('.save-btn').hide();
-    $('.cancel-btn').hide();
-    // --------------------------------------------------
-    // [編集]ボタンが押された時の処理
-    // --------------------------------------------------
-    $('.edit-btn').on('click', function(e) {
-        // 初回時のみ
-        if(isfirstClick) {
-            // ラベル入力欄を追加
-            $('#input-area').append('<input id="input-word" type="text" size="25" placeholder="ラベル名を入力して下さい">');
-            $('#input-area').append('<div class="add-btn"><p>追加</p></div>');
-
-            isfirstClick = false;
-        } 
-
-        //window.open('test.html/' + fileName + '/' + cutNo , null, 'width=1000,toolbar=yes,menubar=yes,scrollbars=yes');
-        window.open('test.html?search=' + fileName + '-' + cutNo, null, 'width=1000,toolbar=yes,menubar=yes,scrollbars=yes');
-
-
-        // [削除]ボタンを追加
-        // 既に追加されている場合は、追加しない
-        if(shouldAddDeleteBtn()) {
-            // 各ラベル要素の下に追加
-            $('#labels .label-item').append('<div class="delete-btn"><span>×</span></div>');
-            
-            // [削除]ボタンにIDを付与
-            $('.delete-btn').attr('data-id', function(i){
-                i++;//初期値0を1に
-                return i;//要素の数だけ1から連番で idを追加
-            });
-        }
-
-        // [編集]ボタンを非表示
-        $('.edit-btn').hide();
-
-        // [保存]ボタンを表示
-        $('.save-btn').show();  
-        
-        // [削除]ボタンを表示
-        $('.delete-btn').css('opacity', '1');
-        
-        // ラベル入力欄を表示
-        $('#input-area').show();
-
-        // [削除]ボタンを追加するか真偽値を返す関数
-        function shouldAddDeleteBtn() {
-            // IDが割り振られていれば、既に追加されているためFalseを返す
-            return $('.label-item .delete-btn').data('id') != 1;
-        }
-    });
-
-    // --------------------------------------------------
-    // [保存]ボタンが押された時の処理
-    // --------------------------------------------------
-    $(document).on('click', '.save-btn', function(e) {
-        // [編集]ボタンを表示
-        $('.edit-btn').show();
-
-        // [保存]ボタンを非表示
-        $('.save-btn').hide();
-
-        // [キャンセル]ボタンを非表示
-        $('.cancel-btn').hide();
-
-        // [削除]ボタンを非表示
-        $('.delete-btn').css('opacity', '0');
-
-        // ラベル入力欄を非表示
-        $('#input-area').hide();
-
-        // 編集後のラベルデータの送信
-        
-    });
-
-    // --------------------------------------------------
-    // [削除]ボタンが押された時の処理
-    // --------------------------------------------------
-    $(document).on('click', '.delete-btn', function(e) {
-        // 該当のラベルを削除
-        let labelId = $(e.currentTarget).data("id");
-        temp.push($('[data-label-id=' + labelId + ']').remove());
-
-        // [キャンセル]ボタンを表示
-        $('.cancel-btn').show();
-
-        // 1つもラベルがない時、「このシーンにはラベルは付与されていません。」を追加
-        if($('.label-item').length == 0) {
-            $('#labels').append('<div class="no-label">このシーンにはラベルは付与されていません。</div>');
-        }
-    });
-
-    // --------------------------------------------------
-    // [キャンセル]ボタンが押された時の処理
-    // --------------------------------------------------
-    $(document).on('click', '.cancel-btn', function(e) {
-        // 削除したラベルを復活させる
-        for(let i = 0; i < temp.length; i++) {  
-            $('#labels').append(temp[i]);
-        }
-            
-        // [キャンセル]ボタンを非表示
-        $('.cancel-btn').hide();
-    });
-
-    // --------------------------------------------------
-    // [追加]ボタンが押された時の処理
-    // --------------------------------------------------
-    $(document).on('click', '.add-btn', function(e) {
-        let $inputWord = $('#input-word').val();
-        // 検索単語が入力されている時にラベルを追加
-        if($inputWord) {
-            // １つもラベルがない時、「このシーンにはラベルは付与されていません。」を削除
-            if($('#labels').children().attr("class") == 'no-label') {
-                $('.no-label').remove();
-            }
-            // ラベルを追加
-            let $labels = $('#labels');
-            let labelId = 3; /////////
-            let $labelItem = $('<div data-label-id="' + labelId + '" class="label-item"></div>');
-            $labelItem.append('<h3 class="label add-label">' + $inputWord + '</h3>');
-
-            // [削除]ボタンを追加
-            $labelItem.append('<div class="delete-btn" data-id="' + labelId +'"><span>×</span></div>');
-
-            // 追加要素を反映
-            $labels.append($labelItem);
-            
-            // ラベル入力欄のテキストを削除
-            $('#input-word').val("");
-
-            // 追加した[削除]ボタンを表示
-            $('.delete-btn').css('opacity', '1');
-        }
-    });
-
-    // --------------------------------------------------
-    // ラベル入力欄でEnterキーが押された時の処理
-    // --------------------------------------------------
-    $(document).on('keypress', '#input-word', function(e) {
-        let key = e.which;
-        if(key == 13) {
-            // 検索ボタンが押された時の処理
-            $('.add-btn').trigger('click');
-
-            return false;
-        }
-    });
-
-    // --------------------------------------------------
-    // [保存]ボタンを押さずに、別のカットをクリックした時 
-    // --------------------------------------------------
-    $('#scene-list').on("click", function(e) {
-        // [保存]ボタンを押していない場合、メッセージを表示して遷移させない
-        if ($('.save-btn').css('display') == 'block') {
-            // 保存できていない旨のメッセージを表示
-            swal("変更内容を保存して下さい", "[保存]ボタンを押してからシーンを切り替えて下さい", "error");
-
-            // データを切り替えずにそのシーンに留まる
-            e.stopImmediatePropagation();
-        }
-    });  
-
-    // --------------------------------------------------
-    // 別のカットをクリックした時、データを切り替える
+    // 別のシーンをクリックした時、データを切り替える
     // --------------------------------------------------
     $('#scene-list').on("click", async function(e) {
-        let cutNo = e.target.getAttribute('data-cut-No');   // カット番号(シーン番号)
+        sceneNo = e.target.getAttribute('data-scene-No');   // シーン番号
 
         // 切り替えたシーンの結果を表示する
-        showResultContents(fileName, cutNo);
+        showResultContents(videoId, sceneNo);
     });  
-
-    var Canvas;
-    var Context;
-    var RectEdgeColor = "#0BF";
-    var RectInnerColor = "rgba(174,230,255,0.3)";
-    var IndicatorColor = "#0082af";
-    var index = 0;
-    var DrawingMemory = { 0: { x: null, y: null, w: null, h: null } };
-    window.addEventListener('load', function () {
-        Canvas = document.getElementById('ex3');
-        Context = Canvas.getContext('2d');
-        Context.strokeStyle = IndicatorColor;
-        Context.fillStyle = RectInnerColor;
-        Context.lineWidth = 1;
-
-        ctx.drawImage(image, dx, dy)
-
-        var startPosition = { x: null, y: null };
-        var isDrag; // ドラッグ&ドロップのフラグ
-
-        function dragStart(x, y) {
-            isDrag = true;
-            startPosition.x = x;
-            startPosition.y = y;
-        }
-
-        function dragEnd(x, y) {
-            if (isDrag) {
-                DrawingMemory[index] = { x: startPosition.x, y: startPosition.y, w: x - startPosition.x, h: y - startPosition.y };
-                index += 1;
-                drawFromMemory();
-            } else {
-                clear();
-                drawFromMemory();
-            }
-            isDrag = false;
-        }
-
-        function drawFromMemory() {
-            Context.strokeStyle = RectEdgeColor;
-            for (i = 0; i < index; i++) {
-                Context.fillRect(DrawingMemory[i].x, DrawingMemory[i].y, DrawingMemory[i].w, DrawingMemory[i].h);
-            }
-            for (i = 0; i < index; i++) {
-                Context.strokeRect(DrawingMemory[i].x, DrawingMemory[i].y, DrawingMemory[i].w, DrawingMemory[i].h);
-            }
-            Context.strokeStyle = IndicatorColor;
-        }
-
-        function draw(x, y) {
-            clear(); // Initialization.
-            drawFromMemory(); // Draw Bounding Boxes.
-
-            // Draw Indicator.
-            Context.beginPath();
-            Context.moveTo(0, y); // start
-            Context.lineTo(Canvas.width, y); // end
-            Context.moveTo(x, 0); // start
-            Context.lineTo(x, Canvas.height); // end
-            Context.closePath();
-            Context.stroke();
-
-            // Draw the current Bounding Box.
-            if (isDrag) {
-                Context.strokeStyle = RectEdgeColor;
-                Context.fillRect(startPosition.x, startPosition.y, x - startPosition.x, y - startPosition.y);
-                Context.strokeRect(startPosition.x, startPosition.y, x - startPosition.x, y - startPosition.y);
-                Context.strokeStyle = IndicatorColor;
-            }
-
-        }
-
-        function mouseHandler() {
-            Canvas.addEventListener('mousedown', function (e) {
-                dragStart(e.layerX, e.layerY);
-            });
-            Canvas.addEventListener('mouseup', function (e) {
-                dragEnd(e.layerX, e.layerY);
-            });
-            Canvas.addEventListener('mouseout', function (e) {
-                dragEnd(e.layerX, e.layerY);
-            });
-            Canvas.addEventListener('mousemove', function (e) {
-                draw(e.layerX, e.layerY);
-            });
-        }
-        mouseHandler();
-    });
-
-    function clear() {
-        Context.clearRect(0, 0, Canvas.width, Canvas.height);
-    }
-
-
 
     // --------------------------------------------------
     // マウスホイールで横スクロール処理
@@ -493,10 +233,10 @@
 
     let moving;         // スクロール後の位置
     let aftermov;       // スクロール後の位置+余韻の距離
-    const after = 100;   // 余韻の距離
+    const after = 50;  // 余韻の距離
     const speed = 1;    // 1スクロールの移動距離
     const animation = 'easeOutCirc';    // アニメーション
-    const anm_speed = 700;    // アニメーションスピード
+    const anm_speed = 300;    // アニメーションスピード
     $('.horizontal-scroll').on('mousewheel', function(e) {
         let mov = e.originalEvent.wheelDelta   // 移動量
 
@@ -520,6 +260,12 @@
         // 縦スクロールさせない
         return false;
     });
+
+    // --------------------------------------------------
+    // アノテーション機能
+    // --------------------------------------------------
+    annotationModule.annotationFunc(videoId);
+
 }
 
 /**
@@ -626,17 +372,17 @@
 
 /**
  * 該当シーンのラベルデータを取得する関数
- * @param  {string} fileName  動画ID 
+ * @param  {string} videoId   動画ID 
  * @param  {int}    sceneNo   シーン番号
- * @return {Object} labelData ラベルデータ（labels_id, label）
+ * @return {Object} labelData ラベルデータ（scene_label_id, label_id, label_nama_ja）
  */
- async function getLabelData(fileName, sceneNo) {
+ async function getLabelData(videoId, sceneNo) {
     // 問い合わせするSQL文
-    let query = "SELECT scene_label.scene_label_id, label_list.label_name_ja " +
+    let query = "SELECT scene_label.scene_label_id, label_list.label_id, label_list.label_name_ja " +
                 "FROM scene_label " + 
                 "LEFT JOIN scene_data ON scene_label.scene_label_id = scene_data.scene_label_id " +
                 "LEFT JOIN label_list ON scene_label.label_id = label_list.label_id " +
-                "WHERE video_id='" + fileName + "' AND scene_no='scene_" + sceneNo + "';";
+                "WHERE video_id='" + videoId + "' AND scene_no='scene_" + sceneNo + "';";
 
     // 接続・問い合わせ
     let labelData = await mydb.query(query);  // 全ＣＭの動画IDと作品名
@@ -651,13 +397,13 @@
  * 該当動画の好感度データを取得する関数
  * @return {Object} favoValues 好感度データ
  */
- async function getFavoValues(fileName) {
+ async function getFavoValues(videoId) {
     // 問い合わせするSQL文
     let query = "SELECT scene_favo.favo " +
                 "FROM scene_favo " + 
                 "LEFT JOIN scene_data ON scene_favo.scene_favo_id = scene_data.scene_favo_id " +
                 "LEFT JOIN score_category ON scene_favo.category = score_category.category " +
-                "WHERE scene_data.video_id='" + fileName + "' AND score_category.category = 'F';";
+                "WHERE scene_data.video_id='" + videoId + "' AND score_category.category = 'F';";
 
     // 接続・問い合わせ
     let favoValues = await mydb.query(query);  // 好感度データ
@@ -773,15 +519,15 @@ function showContens(videos) {
 
 /**
  * 該当シーンのラベルデータを表示する関数
- * @param  {string} fileName 動画ID
- * @param  {int}    sceneNo  シーン番号
+ * @param  {string} videoId 動画ID
+ * @param  {int}    sceneNo シーン番号
  */
- async function showLabelData(fileName, sceneNo) {   
+ async function showLabelData(videoId, sceneNo) {   
     // --------------------------------------------------
     // ラベルデータを取得
     // --------------------------------------------------
-    const labelData = await getLabelData(fileName, sceneNo);  // ラベルデータ
-    console.log(labelData)
+    const labelData = await getLabelData(videoId, sceneNo);  // ラベルデータ
+
     // --------------------------------------------------
     // ラベルを表示
     // --------------------------------------------------
@@ -789,7 +535,7 @@ function showContens(videos) {
     $labels.empty();   // 前のラベルデータを削除
     
     // ラベルが1個もない時
-    if(labelData[0].scene_label_id == null) {
+    if(labelData[0] == null) {
         // ラベルが1つもない文言を表示
         $labels.append('<div class="no-label">このシーンにはラベルは付与されていません。</div>');
     } 
@@ -798,7 +544,14 @@ function showContens(videos) {
         for(let i = 0; i < labelData.length; i++) {     
             let label = labelData[i].label_name_ja // ラベル名
             let $labelItem = $('<div data-label-id="' + Number(i+1) + '" class="label-item"></div>');
-            $labelItem.append('<h3 class="label">' + label + '</h3>');
+            
+            // 動作ラベルはグレー色、物体ラベルはホワイト色で背景を表示
+            if(labelData[i].label_id.slice(0, 1) == 'N') {   
+                $labelItem.append('<h3 class="label">' + label + '</h3>');
+            }
+            else { 
+                $labelItem.append('<h3 class="label-gray">' + label + '</h3>');
+            }
             $labels.append($labelItem);
         }
     }    
@@ -806,15 +559,15 @@ function showContens(videos) {
 
 /**
  * 該当シーンの好感度データを表示する関数
- * @param  {string} fileName 動画ID
- * @param  {int}    sceneNo  シーン番号
+ * @param  {string} videoId 動画ID
+ * @param  {int}    sceneNo シーン番号
  */
- async function showFavoData(fileName, sceneNo) {   
+ async function showFavoData(videoId, sceneNo) {   
     // --------------------------------------------------
     // 好感度データを取得
     // --------------------------------------------------
-    const favoValues = await getFavoValues(fileName);
-    console.log(favoValues)
+    const favoValues = await getFavoValues(videoId);
+    
     // --------------------------------------------------
     // 好感度を表示
     // --------------------------------------------------        
@@ -823,44 +576,55 @@ function showContens(videos) {
     // --------------------------------------------------
     // 好感度グラフを表示
     // --------------------------------------------------  
-    drawChart(favoValues, sceneNo, fileName);
+    drawChart(favoValues, sceneNo, videoId);
 }
 
 /**
  * 該当シーンの分析結果（分割したシーンの動画、ラベルデータ、好感度データ）を表示する関数
- * @param  {string} fileName 動画ID
- * @param  {int}    sceneNo  シーン番号
+ * @param  {string} videoId 動画ID
+ * @param  {int}    sceneNo シーン番号
  */
-function showResultContents(fileName, cutNo) {
+function showResultContents(videoId, sceneNo) {
     // シーンの表示領域クリック時のみ切り替え
-    if(cutNo) {
-        // カット番号を表示
-        $('#cut-no').text(cutNo + 'シーン目');
+    if(sceneNo) {
+        // シーン番号を表示
+        $('#scene-no').text(sceneNo + 'シーン目');
         
         // 動画を置換
+        $('#movie-screen').empty();
         currentVideo = document.getElementById('movie-screen');
         video = document.createElement('video');
-        video.src = '../result/scene/' + fileName + '/' + 'scene' + cutNo + '.mp4';
+        video.src = '../result/scene/' + videoId + '/' + 'scene' + sceneNo + '.mp4';
         video.controls = true;
         video.autoplay = true;
-        currentVideo.replaceChild(video, currentVideo.lastChild);
+        currentVideo.append(video);
 
         // ラベルデータを表示            
-        showLabelData(fileName, cutNo);
+        showLabelData(videoId, sceneNo);
 
         // 好感度データを表示
-        showFavoData(fileName, cutNo);
+        showFavoData(videoId, sceneNo);
 
         // 現在のシーンの枠に色付け
         $('#result-show img').css('border-color', '#000');  // 全ての枠を黒色に戻してから
-        $('#result-show img[data-cut-no=' + cutNo + ']').css('border-color', '#e00');
-
+        $('#result-show img[data-scene-no=' + sceneNo + ']').css('border-color', '#e00');
+        
+        /*
         // --------------------------------------------------
         // [編集]ボタンが押された時の処理
         // --------------------------------------------------
         $('.edit-btn').on('click', function(e) {
-            window.open('test.html?search=' + fileName + '-' + cutNo, null, 'width=1000,toolbar=yes,menubar=yes,scrollbars=yes');
+            //window.open('test.html?search=' + videoId + '-' + sceneNo, null, 'width=1000,toolbar=yes,menubar=yes,scrollbars=yes');
+            //console.log('----------------------' + videoId, sceneNo)
+            drawImage_area(videoId, sceneNo);
+
+            // 新規バウンディングボックスの描画
+            drawDraw_area(videoId, sceneNo);
         });
+        $(document).on('click', '.save-btn', function(e) {
+            changeElementNode('video', videoId, sceneNo);
+        });
+        */
         
     }
 }
@@ -870,7 +634,7 @@ function showResultContents(fileName, cutNo) {
  * @param  {Object} favoData 好感度データ
  * @param  {int}    current  現在のシーン番号
  */
- async function drawChart(favoData, current, fileName) { 
+ async function drawChart(favoData, current, videoId) { 
     // x軸ラベル（シーン〇  〇は全角数字）
     const xAxisLabels = [...Array(favoData.length).keys()].map((d) => {return "シーン" + zenkaku2Hankaku(String(d+1));});
 
@@ -947,19 +711,19 @@ function showResultContents(fileName, cutNo) {
             return;
         }
         
-        let cutNo = item[0]._index + 1  // シーン番号
+        let sceneNo = item[0]._index + 1  // シーン番号
                 
         // 切り替えたシーンの結果を表示する
-        showResultContents(fileName, cutNo);
+        showResultContents(videoId, sceneNo);
     });
 }
 
 /**
  * TODO 
  * 該当動画のアクセス時間を更新する関数
- * @param  {string} fileName 検索ワード
+ * @param  {string} videoId 検索ワード
  */
-function updateAccessHistory(fileName) {
+function updateAccessHistory(videoId) {
     // MySQLとのコネクションの作成
     const connection = mysql.createConnection(mysql_setting);
 
@@ -967,7 +731,7 @@ function updateAccessHistory(fileName) {
     connection.connect();
 
     let query = "UPDATE access_history set last_access_time = NOW() " +
-                "WHERE video_id='" + fileName + "'";
+                "WHERE video_id='" + videoId + "'";
 
     // --------------------------------------------------
     // SQL文の実行
