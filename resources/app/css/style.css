@@ -791,6 +791,7 @@ video {
 }
 .label-item {
     display: flex;
+    padding: 0 0 10px;
 }
 #input-area {
     margin: 10px;
