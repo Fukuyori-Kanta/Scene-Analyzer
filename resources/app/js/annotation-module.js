@@ -2,7 +2,7 @@
  * アノテーション処理 
  */
  exports.annotationFunc = async function (videoId) {
-    let rectCanvas = new fabric.Canvas('rect-area');    // 矩形描画用キャンバス
+    let rectCanvas = new fabric.Canvas('rect-area');    // バウンディングボックス描画用キャンバス
 
     let isfirstClick = true;   // [結果を表示]ボタンを初回クリック時だけtrue
     let temp = [];  // 削除するラベル群
@@ -19,7 +19,7 @@
     // [編集]ボタンが押された時の処理
     // --------------------------------------------------
     $('.edit-btn').on('click', function (e) {
-        let sceneNo = $('#scene-no').text().replace(/[^0-9]/g, ''); // シーン番号 //// 関数化
+        let sceneNo = getCurrentSceneNo(); // シーン番号
 
         // 初回時のみ
         if (isfirstClick) {
@@ -30,25 +30,9 @@
             isfirstClick = false;
         }        
     
-        // キャンバスに切り替え
+        // 動画表示領域をキャンバスに切り替え
         changeElementNode('canvas', videoId, sceneNo);
 
-        /*
-        // 新規矩形描画キーを押す
-        $(document).on('keydown', function (e) {
-            if (e.key === "Enter"){
-                console.log("Enterキーが押されました");
-                
-                let $movieScreen = $('#movie-screen');
-                let width = $movieScreen.width();     // 表示領域の幅
-                let height = $movieScreen.height();   // 表示領域の高さ
-                $movieScreen.append('<canvas id="new-rect-area" width="' + width + '" height="' + height + ';"></canvas>'); // 新規矩形を描画するためのキャンバス
-                // 新規矩形を描画
-                drawNewRectArea(videoId, sceneNo);
-
-            }
-        });
-        */
         /*
         // [削除]ボタンを追加
         // 既に追加されている場合は、追加しない
@@ -86,9 +70,9 @@
     // [保存]ボタンが押された時の処理
     // --------------------------------------------------
     $(document).on('click', '.save-btn', function (e) {
-        let sceneNo = $('#scene-no').text().replace(/[^0-9]/g, ''); // シーン番号
+        let sceneNo = getCurrentSceneNo(); // シーン番号
 
-        // シーン動画に切り替え
+        // 矩形表示領域をシーン動画に切り替え
         changeElementNode('video', videoId, sceneNo);
 
         // [編集]ボタンを表示
@@ -106,6 +90,9 @@
         // ラベル入力欄を非表示
         $('#input-area').hide();
 
+        // ラベルの強調を終了
+        endLabelEmphasis();
+
         // 編集後のラベルデータの送信
 
 
@@ -119,6 +106,7 @@
         let labelId = $('.delete-btn').parent().data('labelId')
         temp.push($('[data-label-id=' + labelId + ']').remove());
         console.log(labelId);
+
         // 該当の矩形を削除
         deleteRect(labelId);
 
@@ -148,7 +136,8 @@
     // [追加]ボタンが押された時の処理
     // --------------------------------------------------
     $(document).on('click', '.add-btn', function (e) {
-        let $inputWord = $('#input-word').val();
+        let $inputWord = $('#input-word').val();    // 入力単語
+
         // 検索単語が入力されている時にラベルを追加
         if ($inputWord) {
             // １つもラベルがない時、「このシーンにはラベルは付与されていません。」を削除
@@ -156,8 +145,8 @@
                 $('.no-label').remove();
             }
             // ラベルを追加
-            let $labels = $('#labels');
-            let labelId = 3; /////////
+            let $labels = $('#labels'); // ラベル表示要素
+            let labelId = $('.label-item:last').data('labelId') + 1; // ラベルID
             let $labelItem = $('<div data-label-id="' + labelId + '" class="label-item"></div>');
             $labelItem.append('<h3 class="label add-label">' + $inputWord + '</h3>');
 
@@ -177,6 +166,7 @@
             let width = $movieScreen.width();     // 表示領域の幅
             let height = $movieScreen.height();   // 表示領域の高さ
             $movieScreen.append('<canvas id="new-rect-area" width="' + width + '" height="' + height + ';"></canvas>'); // 新規矩形を描画するためのキャンバス
+            
             // 新規矩形を描画
             drawNewRectArea($inputWord);
 
@@ -224,23 +214,19 @@
             let height = $movieScreen.height();   // 表示領域の高さ
             
             $movieScreen.append('<canvas id="imgae-area" width="' + width + '" height="' + height + ';"></canvas>');    // サムネ画像を描画するためのキャンバス
-            $movieScreen.append('<canvas id="rect-area" width="' + width + '" height="' + height + ';"></canvas>');     // 付与済みラベルの矩形を描画するためのキャンバス
-            //$movieScreen.append('<canvas id="new-rect-area" width="' + width + '" height="' + height + ';"></canvas>'); // 新規矩形を描画するためのキャンバス
+            $movieScreen.append('<canvas id="rect-area" width="' + width + '" height="' + height + ';"></canvas>');     // バウンディングボックスを描画するためのキャンバス
             $movieScreen.addClass('layer-wrap');
-            //$('.layer-wrap').css('position, relative');
-            //$('.layer-wrap > canvas').css('position, absolute', 'top', 0, 'left', 0);  // キャンバス同士を重ねて表示
-
+            
             // アノテーション用キャンバスを描画
-            // 以下の３つのレイヤーで構成する
+            // 以下の３つのレイヤーで構成する（右に行くほど上のレイヤーになる）
+            // 「サムネ画像用キャンバス」、「矩形描画用キャンバス」、「新規矩形描画用キャンバス」の３レイヤー
+            // 「新規矩形描画用キャンバス」はラベル入力した時のみ表示される
 
-            // サムネ画像描画
+            // サムネ画像を描画
             drawImageArea(videoId, sceneNo);
 
             // 付与済みラベルの矩形を描画
             drawRectArea(videoId, sceneNo);
-
-            // 新規矩形を描画
-            //drawNewRectArea(videoId, sceneNo);
         }
         // 第一引数が'video'の場合、シーン動画を表示
         else if (nodeName == 'video') {
@@ -252,13 +238,10 @@
             });  
             $movieScreen.append($video);
         }
-        else {
-            return exit;
-        }
     }
 
     // サムネ画像を描画する関数
-    async function drawImageArea(videoId, sceneNo) {
+    function drawImageArea(videoId, sceneNo) {
         let imageCanvas = $('#imgae-area')[0];      // サムネ画像を描画するためのキャンバス
         let Context = imageCanvas.getContext('2d'); // CanvasRenderingContext2D オブジェクト
 
@@ -297,22 +280,22 @@
         return labelData;
     }
 
+    // バウンディングボックスのキャンバスを描画関数
     async function drawRectArea(videoId, sceneNo) {
-        fabric.Object.prototype.noScaleCache = false;
-
-        rectCanvas = new fabric.Canvas('rect-area');
+        rectCanvas = new fabric.Canvas('rect-area');    // バウンディングボックスを描画するためのキャンバス
 
         let canvasWidth = rectCanvas.width;     // キャンバスサイズ（幅）
         let canvasHeight = rectCanvas.height;   // キャンバスサイズ（高さ）
         let imageWidth = 426;   // 画像サイズ（幅） TODO 描画する画像サイズを取得
         let imgaeHeight = 240   // 画像サイズ（高さ）
         let xMagnification = canvasWidth / imageWidth;   // サイズ倍率(x)
-        let yMagnification = canvasHeight / imgaeHeight; // サイズ倍率(y)
+        let yMagnification = canvasHeight / imgaeHeight; // サイズ倍率(y)   
+
+        let objId = 1;     // バウンディングボックスを一意に識別するためのID
 
         const labelData = await getBoundingBox(videoId, sceneNo);  // ラベルデータ
 
-        let arrayRect = []; // 矩形オブジェクトの配列
-        let objCnt = 1;     // 矩形オブジェクトを一意に識別するためのカウンタ
+        // バウンディングボックスを描画
         for (let data of labelData) {
             let labelId = data.label_id;    // ラベルID
 
@@ -322,61 +305,18 @@
                 let score = data.recognition_score; // 認識スコア
 
                 let x = data.x_axis * xMagnification;   // x軸の座標
-                let y = data.y_axis * yMagnification;   // y軸の座標
-                let w = data.width * xMagnification;    // 幅
-                let h = data.height * yMagnification;   // 高さ
+                    y = data.y_axis * yMagnification;   // y軸の座標
+                    w = data.width * xMagnification;    // 幅
+                    h = data.height * yMagnification;   // 高さ
 
-                // 矩形（バウンディングボックス）
-                var rect = new fabric.Rect({
-                    left: x,         // 左
-                    top: y,          // 上
-                    width: w,        // 幅
-                    height: h,       // 高さ
-                    strokeWidth: 2,  // 線の幅
-                    stroke: '#0BF',  // 線の色
-                    fill: 'rgba(174,230,255,0.1)', // 塗潰し色
-
-                    hasRotatingPoint: false, // 回転の無効化
-                    strokeUniform: true,
-                    transparentCorners: false,
-                });
-
-                // ラベル名のテキストボックス
-                let textbox = new fabric.Textbox('\u00a0' + labelName + '\u00a0', {
-                    left: x + 2,         // 左
-                    top: y + 2,          // 上
-                    fontSize: 14,
-                    fontFamily: 'Arial',
-                    stroke: '#000', // アウトラインの色
-                    strokeWidth: 1, // アウトラインの太さ
-                    backgroundColor: 'rgba(174,230,255)', 
-                    lockUniScaling: true
-                });
+                let coordinate = [x, y, w, h]   // 引数にする座標データ
                 
-                // 矩形とテキストボックスをグループ化
-                var group = new fabric.Group([rect, textbox], {
-                    id: objCnt,
-                    left: x,
-                    top: y,
-                    hasRotatingPoint: false, // 回転の無効化
-                    
-                    lockScalingFlip: true,    // 裏返しをロック
-                    //hasControls: false, //拡大縮小を無効
-                    // selectable: false // 選択させない
-                    //borderScaleFactor: 0, 
-                    //lockUniScaling: true
-                    cornerColor: '#333',
-                    cornerSize: 9,
-                    cornerStyle: 'circle'
-                });                
-                rectCanvas.add(group);
-                
-                arrayRect.push(objCnt);
-                objCnt += 1;
-                
+                // バウンディングボックスを描画
+                drawRect(objId, coordinate, labelName);
+                                
+                objId += 1;
             }
-            // オブジェクトの描画
-            rectCanvas.renderAll();
+            
         }
 
         // ラベルと矩形のID連携
@@ -403,26 +343,14 @@
             let selectedObject = e.selected[0];     
             let selectedRect = selectedObject._objects[0];   // 選択した矩形
 
-            // 選択状態の時塗りつぶし色を変更
-            selectedRect.set({
-                strokeWidth: 3,  // 線の幅
-                stroke: '#BF0',  // 線の色
-                fill: 'rgba(230,255,174,0.5)', // 塗潰し色
-            }).setCoords();
-            rectCanvas.renderAll();
+            // 矩形の設定を変更
+            changeDrawnRect(selectedRect, 'selected');
 
             // 選択した該当ラベルを強調
-            let $targetLabel = $('.label-item[data-label-id=' + selectedObject.id + ']').children('.label');
-            $targetLabel.css('border', '2px solid #F33');   // 赤色に変更
+            emphasizeLabel(selectedObject.id);
 
             // [削除]ボタンを追加        
-            // 各ラベル要素の下に追加
-            console.log(selectedObject.id)
-            $('#labels .label-item[data-label-id=' + selectedObject.id + ']').append('<div class="delete-btn"><span>×</span></div>');
-            // [削除]ボタンを表示
-            $('.delete-btn').css('opacity', '1');
-            
-            
+            addDeleteBtn(selectedObject.id);           
         });
 
         // 選択状態で他の矩形をクリックした時の処理
@@ -433,29 +361,15 @@
             let selectedObject = e.selected[0]; // 選択したオブジェクト
             let selectedRect = selectedObject._objects[0];   // 選択した矩形
 
-            // 選択状態の時塗りつぶし色を変更
-            deselectedRect.set({
-                strokeWidth: 2,  // 線の幅
-                stroke: '#0BF',  // 線の色
-                fill: 'rgba(174,230,255,0.1)', // 塗潰し色
-            }).setCoords();
-
-            // 選択状態の時塗りつぶし色を変更
-            selectedRect.set({
-                strokeWidth: 3,  // 線の幅
-                stroke: '#BF0',  // 線の色
-                fill: 'rgba(230,255,174,0.5)', // 塗潰し色
-            }).setCoords();
-            rectCanvas.renderAll();
-
+            // 矩形の設定を変更
+            changeDrawnRect(deselectedRect, 'deselected');
+            changeDrawnRect(selectedRect, 'selected');
+            
             // 選択した該当ラベルを強調
-            let $allLabel = $('.label-item').children('.label');
-            $allLabel.css('border', '1px solid #333');   // 黒色に戻す
+            emphasizeLabel(selectedObject.id);
 
-            let $targetLabel = $('.label-item[data-label-id=' + selectedObject.id + ']').children('.label');
-            $targetLabel.css('border', '2px solid #F33');   // 赤色に変更
-
-            // [削除]ボタンを追加 
+            // [削除]ボタンを追加        
+            addDeleteBtn(selectedObject.id, deselectedObject.id);  
             let $targetDeleteBtn = $('.label-item[data-label-id=' + deselectedObject.id + ']').children('.delete-btn');
             $targetDeleteBtn.css('opacity', '0');
             
@@ -470,16 +384,11 @@
         rectCanvas.on('before:selection:cleared', (e) => {   
             let deselectedRect = e.target._objects[0];   // 選択解除した矩形
 
-            // 選択状態の時塗りつぶし色を変更
-            deselectedRect.set({
-                strokeWidth: 2,  // 線の幅
-                stroke: '#0BF',  // 線の色
-                fill: 'rgba(174,230,255,0.1)', // 塗潰し色
-            }).setCoords();
-            rectCanvas.renderAll();
+            // 矩形の設定を変更
+            changeDrawnRect(deselectedRect, 'deselected');
             
-            let $allLabel = $('.label-item').children('.label');
-            $allLabel.css('border', '1px solid #333');   // 黒色に戻す
+            // ラベルの強調を終了
+            endLabelEmphasis();
         });
 
         
@@ -497,6 +406,7 @@
                 scaleY: scaleY
             });                    
         }
+
         /*
         function deleteRect(labelId) {
             let rectCanvas = new fabric.rectCanvas('rect-area');
@@ -540,7 +450,12 @@
             }
             isDrag = false;
             $('#new-rect-area').remove();
-            fab(DrawingMemory[index-1], labelName);
+
+            let coordinate = [DrawingMemory[index-1].x, DrawingMemory[index-1].y, DrawingMemory[index-1].w, DrawingMemory[index-1].h]   // 引数にする座標データ
+            let objId = $('.label-item:last').data('labelId');  // オブジェクトID（ラベル表示要素に追加されたID）
+
+            // バウンディングボックスを描画
+            drawRect(objId, coordinate, labelName);
 
         }
 
@@ -604,56 +519,117 @@
         rectCanvas.remove(rectCanvas._objects[labelId-1]);
 
     }
-
-    function fab(rect, labelName) {
-        //let labelName = '女性';
-        //let rectCanvas = new fabric.Canvas('rect-area');
-        console.log(rectCanvas);
-        let x = rect.x;   // x軸の座標
-        let y = rect.y;   // y軸の座標
-        let w = rect.w;   // 幅
-        let h = rect.h;   // 高さ
-
-        // 矩形（バウンディングボックス）
-        var rect = new fabric.Rect({
+    
+    // バウンディングボックスを描画する関数
+    function drawRect(objId, coordinate, labelName) {
+        let x = coordinate[0],
+            y = coordinate[1],
+            w = coordinate[2],
+            h = coordinate[3]; 
+        
+        // 矩形
+        let rect = new fabric.Rect({
             left: x,         // 左
             top: y,          // 上
             width: w,        // 幅
             height: h,       // 高さ
-            angle: 0,        // 角度
             strokeWidth: 2,  // 線の幅
             stroke: '#0BF',  // 線の色
             fill: 'rgba(174,230,255,0.1)', // 塗潰し色
 
-            hasRotatingPoint: false // 回転の無効化
+            hasRotatingPoint: false, // 回転の無効化
+            strokeUniform: true      // 拡大縮小時に線の幅を固定   
         });
 
         // ラベル名のテキストボックス
         let textbox = new fabric.Textbox('\u00a0' + labelName + '\u00a0', {
-            left: x + 2,         // 左
-            top: y + 2,          // 上
+            left: x + 2,     // 左
+            top: y + 2,      // 上
             fontSize: 14,
-            fontFamily: 'FontAwesome',
-            stroke: '#000', // アウトラインの色
-            strokeWidth: 1, // アウトラインの太さ
-            backgroundColor: 'rgba(174,230,255)',
+            fontFamily: 'Arial',
+            stroke: '#000',  // アウトラインの色
+            strokeWidth: 1,  // アウトラインの太さ
+            backgroundColor: 'rgba(174,230,255)', 
         });
         
         // 矩形とテキストボックスをグループ化
         var group = new fabric.Group([rect, textbox], {
-            id: 1,
+            id: objId,
             left: x,
             top: y,
-            hasRotatingPoint: false // 回転の無効化
-        });
+            hasRotatingPoint: false, // 回転の無効化            
+            lockScalingFlip: true,    // 裏返しをロック
+
+            // コーナー設定
+            cornerColor: '#333',
+            cornerSize: 9,
+            cornerStyle: 'circle'
+        });                
         rectCanvas.add(group);
-        
+
         // オブジェクトの描画
         rectCanvas.renderAll();
+    }
+    
+    // 描画されたバウンディングボックスの設定を変更（追加）する関数
+    // デフォルトは非選択状態とし、選択状態の時に各種変数を更新
+    function changeDrawnRect(rect, rectStatus) {
+        let rectStrokeWidth = 2;
+        let rectstroke = '#0BF';
+        let rectFill = 'rgba(174,230,255,0.1)';
         
+        // 選択状態の時、変数を更新
+        if(rectStatus == 'selected') {
+            rectStrokeWidth = 3;    // 線の幅
+            rectstroke = '#BF0';    // 線の色
+            rectFill = 'rgba(230,255,174,0.5)'; // 塗りつぶし色
+        }
+
+        // 変更
+        rect.set({ 
+            strokeWidth: rectStrokeWidth,  // 線の幅
+            stroke: rectstroke, // 線の色
+            fill: rectFill,     // 塗潰し色
+        }).setCoords();
+
+        // 変更したオブジェクトの描画
+        rectCanvas.renderAll();
+
     }
 
-    //function drawRect()
+    // 現在のシーン番号を取得する関数
+    // ページ上に表示されている「○○シーン目」から取得
+    function getCurrentSceneNo() { 
+        return $('#scene-no').text().replace(/[^0-9]/g, ''); // シーン番号
+    }
 
+    // 該当ラベルを強調する関数
+    function emphasizeLabel(labelId) {
+        // 黒に戻す
+        endLabelEmphasis();
 
+        // 選択された赤色で
+        let $targetLabel = $('.label-item[data-label-id=' + labelId + ']').children('.label');
+        $targetLabel.css('border', '2px solid #F33');   // 赤色に変更
+    }
+    // ラベルの強調を終了する関数
+    function endLabelEmphasis() {
+        let $allLabel = $('.label-item').children('.label');
+        $allLabel.css('border', '1px solid #333');   // 黒色に戻す
+    }
+
+    // 該当ラベルに削除ボタンを追加する関数
+    function addDeleteBtn(selectedLabelId) {
+        let $selectedLabel = $('#labels .label-item[data-label-id=' + selectedLabelId + ']'); // 該当ラベルの要素
+
+        // 全ての削除ボタンを削除
+
+        // まだ追加されていない場合に追加
+        if($selectedLabel.children('.delete-btn').length == 0){
+            $selectedLabel.append('<div class="delete-btn"><span>×</span></div>');
+        }
+
+        // [削除]ボタンを表示
+        $('.delete-btn').css('opacity', '1');
+    }
 }
