@@ -1362,9 +1362,9 @@ details[open] summary {
 
 .layer-wrap {
     position: relative;
-    width: 100%;
-    height: 100%;
 }            
-.layer-wrap > canvas {
+.layer-wrap canvas {
     position: absolute;
+    top: 0;
+    left: 0;
 }
