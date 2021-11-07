@@ -668,7 +668,7 @@ video {
     border-radius: .10rem;
     box-shadow: 0 0 10px 0 rgba(163,163,163,0.50);
 }
-#labels .label-gray {
+#labels .action-label {
     padding: 5px;
     margin-left: 10px;
     background-color: #BBB;
@@ -828,7 +828,7 @@ video {
     margin-left: -10px;
     overflow: hidden;
     transition: 0.5s;
-    opacity: 0;
+    opacity: 1;
     cursor : pointer;
 }
 .delete-btn span {

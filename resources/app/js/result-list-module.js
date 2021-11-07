@@ -550,7 +550,7 @@ function showContens(videos) {
                 $labelItem.append('<h3 class="label">' + label + '</h3>');
             }
             else { 
-                $labelItem.append('<h3 class="label-gray">' + label + '</h3>');
+                $labelItem.append('<h3 class="action-label">' + label + '</h3>');
             }
             $labels.append($labelItem);
         }
