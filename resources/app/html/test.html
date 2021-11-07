@@ -18,7 +18,7 @@
 
     <!-- JSの読み込み -->
     <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.5.0/fabric.min.js"></script>
+    <script src="	https://cdnjs.cloudflare.com/ajax/libs/fabric.js/3.6.3/fabric.js"></script>
     <script type="text/javascript" src="../js/renderer.js"></script>
     
     <style>
@@ -26,9 +26,11 @@
             width: 852px;
             height: 480px;
             position: relative;
-        }            
-        .layer-wrap > canvas {
+        }             
+        .layer-wrap canvas {
             position: absolute;
+            top: 0;
+            left: 0;
         }
 
     </style>
@@ -37,7 +39,9 @@
 <body id="index">
     <div class="layer-wrap">
         <canvas id="imgae-area" width="852px" height="480px" style="border: 1.5px solid #000;"></canvas>
+        <canvas id="rect-area" width="852px" height="480px" style="border: 1.5px solid #000;"></canvas>
         <canvas id="draw-area" width="852px" height="480px" style="border: 1.5px solid #000;"></canvas>
+        
     </div>
     <!--<textarea></textarea>-->
     <!-- ラベル入力欄 -->
@@ -53,57 +57,17 @@
         window.addEventListener('load', async function () {
             
             // カット画像の表示と付与済みラベルのバウンディングボックスの描画
-            drawImage_area();
+            //drawImage_area();
 
-            // 新規バウンディングボックスの描画
-            drawDraw_area();
-            /*
-            var canvas = new fabric.Canvas('draw-area');
- 
-            var rect = new fabric.Rect({
-                left: 110,         //左
-                top: 70,           //上
-                width: 120,        //幅
-                height: 80,        //高さ
-                angle: 20,         //角度
-                strokeWidth: 5,    //線の幅
-                stroke: 'blue',    //線の色
-                fill: 'royalblue', //塗潰し色
-                
-                hasRotatingPoint: false, // 回転の無効化
+            // 新規矩形描画キーを押す
+            $(document).on('keydown', function (e) {
+                if (e.key === "Enter"){
+                    console.log("Enterキーが押されました");
+                    // 新規バウンディングボックスの描画
+                    drawDraw_area();
+
+                }
             });
-            
-            canvas.add(rect);
-
-            left = Math.round(rect.left);
-            top = Math.round(rect.top);
-            width = Math.round(rect.width * rect.scaleX);
-            height = Math.round(rect.width * rect.scaleX);
-            angle = Math.round(rect.angle);
-            strokeWidth = rect.strokeWidth;
-            stroke = rect.stroke;
-            fill = rect.fill;
-
-            //値取得と表示
-            function getProperty(){
-                $('textarea').text(
-                    'left = ' + Math.round(rect.left) + '\n' +
-                    'top = ' + Math.round(rect.top) + '\n' +
-                    'width = ' + Math.round(rect.width * rect.scaleX) + '\n' +
-                    'height = ' + Math.round(rect.width * rect.scaleX) + '\n' +
-                    'angle = ' + Math.round(rect.angle) + '\n' +
-                    'strokeWidth = ' + rect.strokeWidth + '\n' +
-                    'stroke = ' + rect.stroke + '\n' +
-                    'fill = ' + rect.fill
-                );
-            }
- 
-            //変更されたときのイベント処理
-            canvas.on('object:modified', function(){
-                getProperty();
-            });
-
-            */
         });
 
         async function drawImage_area() { 
@@ -214,6 +178,13 @@
                     drawFromMemory();
                 }
                 isDrag = false;
+
+                //$('#draw-area').remove();
+                
+                //offMouseHandler();
+                fab(DrawingMemory[index-1]);
+
+                return false;
             }
 
             function drawFromMemory() {
@@ -249,8 +220,9 @@
                     Context.strokeStyle = IndicatorColor;
                 }
             }
-
+            
             function mouseHandler() {
+                console.log('mouseHandler')
                 Canvas.addEventListener('mousedown', function (e) {
                     dragStart(e.layerX, e.layerY);
                 });
@@ -265,10 +237,74 @@
                 });
             }
             mouseHandler();
+
+            function offMouseHandler() {
+                Canvas.removeEventListener('mousedown', function (e) {
+                    dragStart(e.layerX, e.layerY);
+                });
+                Canvas.removeEventListener('mouseup', function (e) {
+                    dragEnd(e.layerX, e.layerY);
+                });
+                Canvas.removeEventListener('mouseout', function (e) {
+                    dragEnd(e.layerX, e.layerY);
+                });
+                Canvas.removeEventListener('mousemove', function (e) {
+                    draw(e.layerX, e.layerY);
+                });
+            }
             
             function clear() {
                 Context.clearRect(0, 0, Canvas.width, Canvas.height);
             }        
+
+            function fab(rect) {
+                
+                let labelName = '女性';
+                let rectCanvas = new fabric.Canvas('rect-area');
+                console.log(rectCanvas);
+                let x = rect.x;   // x軸の座標
+                let y = rect.y;   // y軸の座標
+                let w = rect.w;   // 幅
+                let h = rect.h;   // 高さ
+
+                // 矩形（バウンディングボックス）
+                var rect = new fabric.Rect({
+                    left: x,         // 左
+                    top: y,          // 上
+                    width: w,        // 幅
+                    height: h,       // 高さ
+                    angle: 0,        // 角度
+                    strokeWidth: 2,  // 線の幅
+                    stroke: '#0BF',  // 線の色
+                    fill: 'rgba(174,230,255,0.1)', // 塗潰し色
+
+                    hasRotatingPoint: false // 回転の無効化
+                });
+
+                // ラベル名のテキストボックス
+                let textbox = new fabric.Textbox('\u00a0' + labelName + '\u00a0', {
+                    left: x + 2,         // 左
+                    top: y + 2,          // 上
+                    fontSize: 14,
+                    fontFamily: 'FontAwesome',
+                    stroke: '#000', // アウトラインの色
+                    strokeWidth: 1, // アウトラインの太さ
+                    backgroundColor: 'rgba(174,230,255)',
+                });
+                
+                // 矩形とテキストボックスをグループ化
+                var group = new fabric.Group([rect, textbox], {
+                    id: 1,
+                    left: x,
+                    top: y,
+                    hasRotatingPoint: false // 回転の無効化
+                });
+                rectCanvas.add(group);
+               
+                // オブジェクトの描画
+                rectCanvas.renderAll();
+                
+            }
 
         }
         // --------------------------------------------------
