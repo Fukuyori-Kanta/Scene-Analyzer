@@ -3,6 +3,9 @@
  */
  exports.annotationFunc = async function (videoId) {
     let rectCanvas = new fabric.Canvas('rect-area');    // バウンディングボックス描画用キャンバス
+    let oldRect = [];   // 更新前の矩形データ
+    let newRect = [];   // 更新後の矩形データ
+    let updateRect = [];// 更新後矩形データ 
 
     let isfirstClick = true;   // [結果を表示]ボタンを初回クリック時だけtrue
     let temp = [];  // 削除するラベル群
@@ -65,8 +68,35 @@
                     emphasizeLabel(labelId);
                     
                     // [削除]ボタンを追加     
-                    addDeleteBtn(labelId);           
-                }                       
+                    addDeleteBtn(labelId); 
+                    
+                    // ラベル名の編集
+
+                    // let labelName = selectedObj._objects[1].text.trim();
+                    
+                    // $(this).children('.label').remove();
+                    // $(this).prepend('<input class="label-input" type="text" width="10" value="' + labelName + '" readonly></input>');
+                    /*
+                    if($('#div802-edit').length) {
+                        $(this).append('<input type="text" id="div802-edit" style="display:none;"></input>');
+                    }
+                    
+                    $(this).children('.label').css('display', 'none');
+                    $('#div802-edit')
+                        .val( $(this).children('.label').text())
+                        .css( 'display', '')
+                        .focus();
+                    
+                    $('#div802-edit').change(function() {
+                        let changedLabelName = $('#div802-edit').val();
+                        $('#div802-edit').css('display', 'none');
+                        $(this).children('.label')
+                            .text(changedLabelName)
+                            .css('display', '');
+                    });
+                    */
+                    
+                }                      
             });
         });
 
@@ -99,8 +129,51 @@
 
             // 編集後のラベルデータの送信
 
+               
+            // 座標の逆算（上側が座標描画用に計算した座標、下側が計算結果座標から逆算した元の座標）
+            // 〇 Rect(x) = axis_x * canvasWidth / imageWidth
+            // 〇 axis_x = Rect(x) * imageWidth / canvasWidth
+
+            /*
+            let canvasWidth = rectCanvas.width;     // キャンバスサイズ（幅）
+            let canvasHeight = rectCanvas.height;   // キャンバスサイズ（高さ）
+            let imageWidth = 426;   // 画像サイズ（幅） TODO 描画する画像サイズを取得
+            let imgaeHeight = 240   // 画像サイズ（高さ）
+            let xMagnification = canvasWidth / imageWidth;   // サイズ倍率(x)
+            let yMagnification = canvasHeight / imgaeHeight; // サイズ倍率(y)  
+
+            for (let labelId = 1; labelId < rectCanvas._objects.length+1; labelId++) {
+                let rectObj = rectCanvas._objects[labelId-1];
+                let rect = rectObj._objects[0]; // 矩形
+                let labelName = rectObj._objects[1].text.trim();    // ラベル名
+                let x = Math.round(rect.axisX * imageWidth / canvasWidth);
+                    y = Math.round(rect.axisY  * imgaeHeight / canvasHeight);
+                    w = Math.round(rect.width * imageWidth / canvasWidth);
+                    h = Math.round(rect.height * imgaeHeight / canvasHeight);
+                console.log(rect.left)
+                newRect.push([labelName, x, y, w, h]);
+            }
+            */
+
+            // 更新されている場合（配列を文字列にして比較）
+            // TODO: ラベルがない場合も考える
+            if(String(newRect) != String(oldRect) && newRect.length != 0) {
+                console.log('更新されている');
+                console.log(oldRect)
+                console.log(newRect)
+                //console.log(newRect.filter(i => oldRect.indexOf(i) == -1))
+            }
+            else {
+                console.log('更新されていない');
+            }
+
+            // 初期化
+            oldRect = [];
+            newRect = [];
+            
 
         });
+
 
         // --------------------------------------------------
         // [削除]ボタンが押された時の処理
@@ -289,6 +362,8 @@
                 drawRect(objId, coordinate, labelName);
                                 
                 objId += 1;
+                // 更新前の矩形データを保存
+                oldRect.push([labelName, data.x_axis, data.y_axis, data.width, data.height]);
             }
         }
 
@@ -362,6 +437,50 @@
                 scaleY: scaleY
             });                    
         }
+
+        // 矩形修正時の更新処理
+        rectCanvas.on('object:modified', (e) => { 
+            //console.log(e.target);
+            //updateRect.push()
+            //let rect = e.target; // 選択解除した矩形
+            //console.log(rect)
+            /*
+            // 変更
+            rect.set({ 
+                left: rect.left,         // 左
+                top: rect.top,          // 上
+                axisX: rect.left,        // 原点からの座標（x）
+                axisY: rect.top,        // 原点からの座標（y）            
+                width: rect.width,        // 幅
+                height: rect.height,       // 高さ
+            }).setCoords();
+            // オブジェクトの描画
+            rectCanvas.renderAll();
+
+            */
+            let rectObj = e.target;
+            let rect = rectObj._objects[0]; // 矩形
+            
+            let objId = rectObj.id;
+            let labelName = rectObj._objects[1].text.trim();    // ラベル名
+
+            let canvasWidth = rectCanvas.width;     // キャンバスサイズ（幅）
+            let canvasHeight = rectCanvas.height;   // キャンバスサイズ（高さ）
+            let imageWidth = 426;   // 画像サイズ（幅） TODO 描画する画像サイズを取得
+            let imgaeHeight = 240   // 画像サイズ（高さ）
+            let xMagnification = canvasWidth / imageWidth;   // サイズ倍率(x)
+            let yMagnification = canvasHeight / imgaeHeight; // サイズ倍率(y)  
+            console.log(rectObj)
+            let x = Math.round(rectObj.left * imageWidth / canvasWidth);
+                y = Math.round(rectObj.top  * imgaeHeight / canvasHeight);
+                w = Math.round(rectObj.width * imageWidth / canvasWidth);
+                h = Math.round(rectObj.height * imgaeHeight / canvasHeight);
+
+                
+            newRect = oldRect.concat();
+            newRect[objId-1] = [labelName, x, y, w, h];
+        });
+        
     }
 
     // 新規矩形を描画する関数
@@ -403,6 +522,8 @@
 
             // バウンディングボックスを描画
             drawRect(objId, coordinate, labelName);
+            newRect = oldRect.concat();
+            newRect.push([labelName, DrawingMemory[index-1].x, DrawingMemory[index-1].y, DrawingMemory[index-1].w, DrawingMemory[index-1].h]);
 
         }
 
@@ -494,6 +615,8 @@
         let rect = new fabric.Rect({
             left: x,         // 左
             top: y,          // 上
+            axisX: x,        // 原点からの座標（x）
+            axisY: y,        // 原点からの座標（y）            
             width: w,        // 幅
             height: h,       // 高さ
             strokeWidth: 2,  // 線の幅

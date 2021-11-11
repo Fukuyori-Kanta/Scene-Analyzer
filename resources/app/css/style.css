@@ -676,6 +676,20 @@ video {
     border-radius: .10rem;
     box-shadow: 0 0 10px 0 rgba(163,163,163,0.50);
 }
+/*
+#labels #div802-edit {
+    padding: 5px;
+    margin-left: 10px;
+    background-color: #F2F2F2;
+    border: 1px solid #333333;
+    border-radius: .10rem;
+    box-shadow: 0 0 10px 0 rgba(163,163,163,0.50);
+    width: 8rem;
+}
+#labels #div802-edit {
+    font-size: 22px;
+}
+*/
 #favo {
     display: inline-block;
     padding: 5px;
