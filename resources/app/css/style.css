@@ -690,19 +690,9 @@ video {
     font-size: 22px;
 }
 */
-#favo {
-    display: inline-block;
-    padding: 5px;
-    margin-left: 30px;
-    background-color: #F2F2F2;
-    border: 1px solid #333333;
-    border-radius: .10rem;
-    box-shadow: 0 0 10px 0 rgba(163,163,163,0.50);
-    margin-bottom: 20px;
-}
 .favo-gragh {
     margin-left: 30px;
-    width:  calc(60% - 40px);
+    width:  calc(90% - 40px);
     overflow: hidden;
 }
 .favo-gragh canvas{
